@@ -60,8 +60,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define NICHROME_Pin GPIO_PIN_13
-#define NICHROME_GPIO_Port GPIOC
+#define LED_L0_Pin GPIO_PIN_13
+#define LED_L0_GPIO_Port GPIOC
 #define FLIGHT_PIN_Pin GPIO_PIN_14
 #define FLIGHT_PIN_GPIO_Port GPIOC
 #define SUB_EN_Pin GPIO_PIN_15
@@ -76,8 +76,8 @@ void Error_Handler(void);
 #define GNSS_RX_GPIO_Port GPIOA
 #define LED_TX_Pin GPIO_PIN_10
 #define LED_TX_GPIO_Port GPIOB
-#define LED_L0_Pin GPIO_PIN_11
-#define LED_L0_GPIO_Port GPIOB
+#define Nichrome_Pin GPIO_PIN_11
+#define Nichrome_GPIO_Port GPIOB
 #define PC_TX_Pin GPIO_PIN_3
 #define PC_TX_GPIO_Port GPIOB
 #define PC_RX_Pin GPIO_PIN_4

@@ -54,26 +54,26 @@ $EndComp
 $Comp
 L user_library:FDS4935A Q1
 U 1 1 5DA5BC73
-P 2250 1200
-F 0 "Q1" V 2675 1200 50  0000 C CNN
-F 1 "FDS4935A" V 2584 1200 50  0000 C CNN
-F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 2450 1300 50  0001 C CNN
-F 3 "~" H 2250 1200 50  0001 C CNN
-F 4 "I-01246" H 0   0   50  0001 C CNN "秋月"
-	1    2250 1200
-	0    -1   -1   0   
-$EndComp
-$Comp
-L user_library:FDS4935A Q1
-U 2 1 5DA5BCB6
 P 2950 1200
 F 0 "Q1" V 3375 1200 50  0000 C CNN
 F 1 "FDS4935A" V 3284 1200 50  0000 C CNN
 F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 3150 1300 50  0001 C CNN
 F 3 "~" H 2950 1200 50  0001 C CNN
-F 4 "I-01246" H 0   0   50  0001 C CNN "秋月"
-	2    2950 1200
+F 4 "I-01246" H 700 0   50  0001 C CNN "秋月"
+	1    2950 1200
 	0    1    -1   0   
+$EndComp
+$Comp
+L user_library:FDS4935A Q1
+U 2 1 5DA5BCB6
+P 2250 1200
+F 0 "Q1" V 2675 1200 50  0000 C CNN
+F 1 "FDS4935A" V 2584 1200 50  0000 C CNN
+F 2 "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" H 2450 1300 50  0001 C CNN
+F 3 "~" H 2250 1200 50  0001 C CNN
+F 4 "I-01246" H -700 0   50  0001 C CNN "秋月"
+	2    2250 1200
+	0    -1   -1   0   
 $EndComp
 $Comp
 L Switch:SW_SPST SW1
@@ -98,7 +98,7 @@ F 3 "~" H 2600 1300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1750 1100 2000 1100
+	1750 1100 1800 1100
 Wire Wire Line
 	2050 1000 2000 1000
 Wire Wire Line
@@ -2489,9 +2489,9 @@ Text Label 1350 8800 2    50   ~ 0
 STM→CAM
 Text Label 1450 3600 2    50   ~ 0
 FlightPin
-Text Label 1450 3500 2    50   ~ 0
-Nichrome
 Text Label 1450 5000 2    50   ~ 0
+Nichrome
+Text Label 1450 3500 2    50   ~ 0
 LED_L0
 Text Label 2950 9400 0    50   ~ 0
 LED_F2
@@ -2557,8 +2557,6 @@ Wire Wire Line
 	2950 3900 2850 3900
 Wire Wire Line
 	1350 8000 1450 8000
-Wire Wire Line
-	1350 8800 1450 8800
 Wire Wire Line
 	1450 8900 1350 8900
 Wire Wire Line
@@ -2761,8 +2759,6 @@ Wire Wire Line
 Connection ~ 5750 8500
 Wire Wire Line
 	5750 8500 5750 9350
-Wire Wire Line
-	5200 8600 5200 8500
 Connection ~ 5200 8500
 Wire Wire Line
 	5200 8500 5100 8500
@@ -2897,4 +2893,50 @@ Wire Wire Line
 Connection ~ 9150 3650
 Text Notes 4850 2150 2    50   ~ 0
 R:0x81\nW:0x80
+$Comp
+L Connector_Generic:Conn_01x03 P2
+U 1 1 5DAB2B3F
+P 800 1950
+F 0 "P2" H 720 1625 50  0000 C CNN
+F 1 "Charge" H 720 1716 50  0000 C CNN
+F 2 "Connector_JST:JST_EH_B03B-EH-A_1x03_P2.50mm_Vertical" H 800 1950 50  0001 C CNN
+F 3 "~" H 800 1950 50  0001 C CNN
+	1    800  1950
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	1000 1850 1800 1850
+Wire Wire Line
+	1800 1850 1800 1100
+Wire Wire Line
+	1800 1100 2000 1100
+Connection ~ 1800 1100
+Wire Wire Line
+	750  1200 750  1500
+Wire Wire Line
+	750  1500 1150 1500
+Wire Wire Line
+	1150 1500 1150 1950
+Wire Wire Line
+	1150 1950 1000 1950
+Connection ~ 750  1200
+$Comp
+L power:GND #PWR0103
+U 1 1 5DB1BEFF
+P 1100 2100
+F 0 "#PWR0103" H 1100 1850 50  0001 C CNN
+F 1 "GND" H 1105 1927 50  0000 C CNN
+F 2 "" H 1100 2100 50  0001 C CNN
+F 3 "" H 1100 2100 50  0001 C CNN
+	1    1100 2100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1000 2050 1100 2050
+Wire Wire Line
+	1100 2050 1100 2100
+Wire Wire Line
+	5200 8500 5200 8650
+Wire Wire Line
+	1350 8800 1450 8800
 $EndSCHEMATC
