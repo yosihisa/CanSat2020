@@ -2785,6 +2785,7 @@ F 0 "U11" H 9350 7400 50  0000 R CNN
 F 1 "LPS25HB" H 9350 7500 50  0000 R CNN
 F 2 "Package_LGA:ST_HLGA-10_2.5x2.5mm_P0.6mm_LayoutBorder3x2y" H 8950 7750 50  0001 C CNN
 F 3 "www.st.com/resource/en/datasheet/lps25hb.pdf" H 9000 7600 50  0001 C CNN
+F 4 "110-6550" H 0   0   50  0001 C CNN "RS"
 	1    8950 7950
 	-1   0    0    -1  
 $EndComp
