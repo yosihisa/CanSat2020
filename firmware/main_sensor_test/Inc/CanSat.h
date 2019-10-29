@@ -55,9 +55,9 @@ struct gnss {
 };
 
 typedef struct {
-	unsigned int log_num;
+	unsigned long log_num;
 
-	int mode;
+	short mode;
 	char flightPin;
 
 	short voltage;
@@ -66,6 +66,9 @@ typedef struct {
 	struct gnss gnss_data;
 	struct xyza c_data;
 	struct xyz a_data;
+	unsigned long press;
+	short press_d;
+
 	unsigned short dist;
 
 	float arg;

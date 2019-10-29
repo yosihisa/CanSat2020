@@ -73,3 +73,87 @@ unsigned short reset_UVP() {
 	uint16_t res = (rx_buff[0] << 8) + rx_buff[1];
 	return res;
 }
+
+
+
+//----------------------------------------LPS25H----------------------------------------
+#define LPS25H_REF_P_XL			0x08
+#define LPS25H_REF_P_L			0x09
+#define LPS25H_REF_P_H			0x0A
+#define LPS25H_WHO_AM_I			0x0F
+#define LPS25H_RES_CONF			0x10
+#define LPS25H_CTRL_REG1		0x20
+#define LPS25H_CTRL_REG2		0x21
+#define LPS25H_CTRL_REG3		0x22
+#define LPS25H_CTRL_REG4		0x23
+#define LPS25H_INT_CFG			0x24
+#define LPS25H_INT_SOURCE		0x25
+#define LPS25H_STATUS_REG		0x27
+#define LPS25H_PRESS_OUT_XL		0x28
+#define LPS25H_PRESS_OUT_L		0x29
+#define LPS25H_PRESS_OUT_H		0x2A
+#define LPS25H_TEMP_OUT_L		0x2B
+#define LPS25H_TEMP_OUT_H		0x2C
+#define LPS25H_FIFO_CTRL		0x2E
+#define LPS25H_FIFO_STATUS		0x2F
+#define LPS25H_THS_P_L			0x30
+#define LPS25H_THS_P_H			0x31
+#define LPS25H_RPDS_L			0x39
+#define LPS25H_RPDS_H			0x3A
+
+unsigned char lps25h_who_am_i()
+{
+	uint8_t rx_buff;
+	HAL_I2C_Mem_Read(&I2C_PORT, LPS25H_READ, LPS25H_WHO_AM_I, 1, &rx_buff, 1, 10);
+	return rx_buff;
+}
+
+void init_lps25h()
+{
+	uint8_t tx_buff;
+	tx_buff = 0x0F;
+	HAL_I2C_Mem_Write(&I2C_PORT, LPS25H_WRITE, LPS25H_RES_CONF, 1, &tx_buff, 1, 10);
+
+	tx_buff = 0b11000000;
+	HAL_I2C_Mem_Write(&I2C_PORT, LPS25H_WRITE, LPS25H_CTRL_REG1, 1, &tx_buff, 1, 10);
+}
+
+unsigned long get_press()
+{
+	unsigned long press = 0;
+	uint8_t rx_buff;
+
+	HAL_I2C_Mem_Read(&I2C_PORT, LPS25H_READ, LPS25H_PRESS_OUT_H, 1, &rx_buff, 1, 10);
+	press = rx_buff << 16;
+	HAL_I2C_Mem_Read(&I2C_PORT, LPS25H_READ, LPS25H_PRESS_OUT_L, 1, &rx_buff, 1, 10);
+	press |= rx_buff << 8;
+	HAL_I2C_Mem_Read(&I2C_PORT, LPS25H_READ, LPS25H_PRESS_OUT_XL, 1, &rx_buff, 1, 10);
+	press |= rx_buff;
+
+	return press;
+}
+
+ short get_temp()
+{
+	short temp = 0;
+	uint8_t rx_buff;
+
+	HAL_I2C_Mem_Read(&I2C_PORT, LPS25H_READ, LPS25H_TEMP_OUT_H, 1, &rx_buff, 1, 10);
+	temp |= rx_buff << 8;
+	HAL_I2C_Mem_Read(&I2C_PORT, LPS25H_READ, LPS25H_TEMP_OUT_L, 1, &rx_buff, 1, 10);
+	temp |= rx_buff;
+
+	return temp;
+}
+
+//----------------------------------------ADXL375----------------------------------------
+#define ADXL375_DEVID			0x00
+#define ADXL375_POWER_CTL		0x2D
+#define ADXL375_DATA_FORMAT		0x31
+#define ADXL375_BW_RATE			0x2C
+#define ADXL375_DATAX0			0x32
+#define ADXL375_DATAX1			0x33
+#define ADXL375_DATAY0			0x34
+#define ADXL375_DATAY1			0x35
+#define ADXL375_DATAZ0			0x36
+#define ADXL375_DATAZ1			0x37

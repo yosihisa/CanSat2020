@@ -13,14 +13,26 @@
 #define INA226_WRITE 0x80
 #define INA226_READ  0x81
 
+#define LPS25H_WRITE 0xBA
+#define LPS25H_READ  0xBB
 
-unsigned short ina226_who_am_i();
-void set_UVP(const short voltage); //Œx“dˆ³İ’è[mV]
-short get_current_raw(); //“d—¬æ“¾
-short get_voltage_raw(); //“dˆ³æ“¾
-short get_current(); //“d—¬æ“¾[mA]
-short get_voltage(); //“dˆ³æ“¾[mV]
+ //----------------------------------------INA226----------------------------------------
+unsigned short ina226_who_am_i(); //2260
+void set_UVP(const short voltage); //è­¦å‘Šé›»åœ§è¨­å®š[mV]
+short get_current_raw(); //é›»æµå–å¾—
+short get_voltage_raw(); //é›»åœ§å–å¾—
+short get_current(); //é›»æµå–å¾—[mA]
+short get_voltage(); //é›»åœ§å–å¾—[mV]
+unsigned short reset_UVP(); //UVPå¾©å¸°
 
-unsigned short reset_UVP(); //UVP•œ‹A
+ //----------------------------------------LPS25H----------------------------------------
+unsigned char lps25h_who_am_i(); //BD
+void init_lps25h();
+unsigned long get_press();
+short get_temp();
+
+
+ //----------------------------------------ADXL375----------------------------------------
+
 
 #endif /* I2C_SENSOR_H_ */

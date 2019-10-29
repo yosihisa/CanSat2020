@@ -131,7 +131,9 @@ int main(void)
   HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(Nichrome_GPIO_Port, Nichrome_Pin, GPIO_PIN_RESET);
 
-  printf("INA226 = %02X \n", ina226_who_am_i());
+  printf("INA226  = %02X \n", ina226_who_am_i());
+  printf("LPS25HB = %01X \n", lps25h_who_am_i());
+
   init_I2C();
 
   cansat_data.log_num = 0;
@@ -146,7 +148,20 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  update_sensor(&cansat_data);
 
-	  printf("%4dmV %2dmA \n", cansat_data.voltage, cansat_data.current);
+	  float temp = (get_temp() / 480.0) + 42.5;
+	  int temp_h = (int)temp;
+	  int temp_l = ((int)(temp * 100)) % 100;
+
+	  float press = cansat_data.press / 4096.0;
+	  int press_h = (int)press;
+	  int press_l = ((int)(press * 1000)) % 1000;
+
+
+	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
+	  printf("%2d.%02dC %4d.%04dhPa ", temp_h, temp_l, press_h, press_l);
+	  printf("%d %d ", get_temp(), cansat_data.press);
+
+	  printf("\n");
 
 	  cansat_data.log_num++;
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, cansat_data.log_num % 2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
