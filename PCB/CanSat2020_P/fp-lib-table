@@ -1,2 +1,3 @@
 (fp_lib_table
+  (lib (name CanSat2020_P)(type KiCad)(uri D:/Programming/CanSat2020/PCB/CanSat2020_P)(options "")(descr ""))
 )

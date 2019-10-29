@@ -2419,7 +2419,7 @@ $EndComp
 Text Label 11200 9200 2    50   ~ 0
 FlightPin
 Wire Wire Line
-	11200 9200 11500 9200
+	11200 9200 11300 9200
 Wire Wire Line
 	11500 9200 11500 9150
 Wire Wire Line
@@ -2507,7 +2507,7 @@ Text Label 2950 9200 0    50   ~ 0
 MAIN→SUB
 Text Label 2950 9300 0    50   ~ 0
 MAIN←SUB
-Text Label 2950 8400 0    50   ~ 0
+Text Label 3000 8400 0    50   ~ 0
 SUB_EN
 Wire Wire Line
 	1450 3500 1550 3500
@@ -2940,4 +2940,37 @@ Wire Wire Line
 	5200 8500 5200 8650
 Wire Wire Line
 	1350 8800 1450 8800
+Text Label 1450 3200 2    50   ~ 0
+IMG_MODE
+Wire Wire Line
+	1450 3200 1550 3200
+Text Label 3000 8300 0    50   ~ 0
+IMG_MODE
+Wire Wire Line
+	3000 8300 2850 8300
+$Comp
+L Device:C_Small C23
+U 1 1 5DB474B6
+P 11300 9300
+F 0 "C23" H 11392 9346 50  0000 L CNN
+F 1 "0.1u" H 11392 9255 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 11300 9300 50  0001 C CNN
+F 3 "~" H 11300 9300 50  0001 C CNN
+	1    11300 9300
+	-1   0    0    -1  
+$EndComp
+Connection ~ 11300 9200
+Wire Wire Line
+	11300 9200 11500 9200
+$Comp
+L power:GND #PWR0104
+U 1 1 5DB47915
+P 11300 9400
+F 0 "#PWR0104" H 11300 9150 50  0001 C CNN
+F 1 "GND" H 11305 9227 50  0000 C CNN
+F 2 "" H 11300 9400 50  0001 C CNN
+F 3 "" H 11300 9400 50  0001 C CNN
+	1    11300 9400
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
