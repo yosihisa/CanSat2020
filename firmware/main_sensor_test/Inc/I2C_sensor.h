@@ -16,6 +16,9 @@
 #define LPS25H_WRITE 0xBA
 #define LPS25H_READ  0xBB
 
+#define ADXL375_WRITE 0xA6
+#define ADXL375_READ  0xA7
+
  //----------------------------------------INA226----------------------------------------
 unsigned short ina226_who_am_i(); //2260
 void set_UVP(const short voltage); //警告電圧設定[mV]
@@ -33,6 +36,12 @@ short get_temp();
 
 
  //----------------------------------------ADXL375----------------------------------------
+unsigned char adxl375_who_am_i(); //BD
+void init_adxl375();
+struct xyz get_acceleration();
 
+ //----------------------------------------LSM303AGR-C------------------------------------
+
+ //----------------------------------------VL53L0X----------------------------------------
 
 #endif /* I2C_SENSOR_H_ */

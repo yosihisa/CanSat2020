@@ -9,6 +9,7 @@
 void init_I2C(){
 	set_UVP(6400);
 	init_lps25h();
+	init_adxl375();
 }
 
 void update_sensor(cansat_t* data){
@@ -16,4 +17,6 @@ void update_sensor(cansat_t* data){
 	data->current = get_current();
 
 	data->press = get_press();
+	data->accel = get_acceleration();
+
 }

@@ -65,7 +65,7 @@ typedef struct {
 
 	struct gnss gnss_data;
 	struct xyza c_data;
-	struct xyz a_data;
+	struct xyz accel;
 	unsigned long press;
 	short press_d;
 

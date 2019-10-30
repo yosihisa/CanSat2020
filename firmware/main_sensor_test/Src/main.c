@@ -133,6 +133,8 @@ int main(void)
 
   printf("INA226  = %02X \n", ina226_who_am_i());
   printf("LPS25HB = %01X \n", lps25h_who_am_i());
+  printf("ADXL375 = %01X \n", adxl375_who_am_i());
+
 
   init_I2C();
 
@@ -149,17 +151,18 @@ int main(void)
 	  update_sensor(&cansat_data);
 
 	  float temp = (get_temp() / 480.0) + 42.5;
-	  int temp_h = (int)temp;
-	  int temp_l = ((int)(temp * 100)) % 100;
 
 	  float press = cansat_data.press / 4096.0;
-	  int press_h = (int)press;
-	  int press_l = ((int)(press * 1000)) % 1000;
+
+	  float ax, ay, az;
+	  ax = (float)cansat_data.accel.x * 49 / 1000;
+	  ay = (float)cansat_data.accel.y * 49 / 1000;
+	  az = (float)cansat_data.accel.z * 49 / 1000;
 
 
 	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
-	  printf("%2d.%02dC %4d.%04dhPa ", temp_h, temp_l, press_h, press_l);
-	  printf("%d %d ", get_temp(), cansat_data.press);
+	  printf("%5.2fC %8.3fdhPa ", temp, press);
+	  printf("G[%+5.3f,%+5.3f,%+5.3f]", ax,ay,az);
 
 	  printf("\n");
 
