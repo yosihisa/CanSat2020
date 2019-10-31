@@ -57,6 +57,7 @@ UART_HandleTypeDef huart5;
 /* USER CODE BEGIN PV */
 void __io_putchar(uint8_t ch) {
 	HAL_UART_Transmit(&huart5, &ch, 1, 1);
+	HAL_UART_Transmit(&huart1, &ch, 1, 1); //COM
 }
 /* USER CODE END PV */
 
