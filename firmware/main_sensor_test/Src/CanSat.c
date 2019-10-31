@@ -6,6 +6,7 @@
  *      Author: yosihisa
  */
 
+
 void init_I2C(){
 	set_UVP(6400);
 	init_lps25h();
@@ -21,4 +22,5 @@ void update_sensor(cansat_t* data){
 	data->accel = get_acceleration();
 	data->compass = get_compass();
 
+	data->dist_ToF = -1;
 }

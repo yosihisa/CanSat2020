@@ -164,7 +164,7 @@ int main(void)
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
 	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
 	  printf("C[%+4d,%+4d,%+4d] %+3.2f ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
-
+	  printf("%3dcm", cansat_data.dist_ToF);
 
 	  printf("\n");
 

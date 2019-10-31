@@ -193,6 +193,10 @@ struct xyz get_acceleration() {
 		data.y = rx_buff[2] | (rx_buff[3] << 8);
 		data.z = rx_buff[4] | (rx_buff[5] << 8);
 
+		data.x -= 16;
+		data.y -= 24;
+		data.z += 16;
+
 		if (ABS(data.x) > res.x)res.x = -1 * data.x;
 		if (ABS(data.z) > res.y)res.y = +1 * data.z;
 		if (ABS(data.y) > res.z)res.z = +1 * data.y;
@@ -250,7 +254,7 @@ struct xyza get_compass() {
 	struct xyza data = { 0 };
 	uint8_t rx_buff[6];
 
-	HAL_I2C_Mem_Read(&I2C_PORT, LSM303_READ, OUTX_L_REG_M, 1, rx_buff, 6, 100);
+	HAL_I2C_Mem_Read(&I2C_PORT, LSM303_READ, OUTX_L_REG_M, 1, rx_buff, 6, 10);
 	data.x = rx_buff[0] | (rx_buff[1] << 8);
 	data.z = rx_buff[2] | (rx_buff[3] << 8);
 	data.y = rx_buff[4] | (rx_buff[5] << 8);

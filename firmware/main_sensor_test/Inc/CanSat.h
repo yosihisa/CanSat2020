@@ -66,7 +66,7 @@ typedef struct {
 	unsigned long press;
 	short press_d;
 
-	unsigned short dist;
+	unsigned short dist_ToF;
 
 	float arg;
 
