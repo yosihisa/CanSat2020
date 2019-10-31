@@ -158,7 +158,6 @@ short get_temp() {
 #define ADXL375_DATAZ1			0x37
 #define ADXL375_FIFO_CTL		0x38
 
-
 unsigned char adxl375_who_am_i() {
 	uint8_t rx_buff;
 	HAL_I2C_Mem_Read(&I2C_PORT, ADXL375_READ, ADXL375_DEVID, 1, &rx_buff, 1, 10);
@@ -177,7 +176,7 @@ void init_adxl375() {
 	tx_buff = 0b10000000; //FIFOをstreamモードで使用
 	HAL_I2C_Mem_Write(&I2C_PORT, ADXL375_WRITE, ADXL375_FIFO_CTL, 1, &tx_buff, 1, 10);
 
-	tx_buff = 0b00001011; //200G
+	tx_buff = 0b00001010; //100Hz
 	HAL_I2C_Mem_Write(&I2C_PORT, ADXL375_WRITE, ADXL375_BW_RATE, 1, &tx_buff, 1, 10);
 }
 
@@ -194,14 +193,76 @@ struct xyz get_acceleration() {
 		data.y = rx_buff[2] | (rx_buff[3] << 8);
 		data.z = rx_buff[4] | (rx_buff[5] << 8);
 
-		if (ABS(data.x) > res.x)res.x = data.x;
-		if (ABS(data.y) > res.y)res.y = data.y;
-		if (ABS(data.z) > res.z)res.z = data.z;
+		if (ABS(data.x) > res.x)res.x = -1 * data.x;
+		if (ABS(data.z) > res.y)res.y = +1 * data.z;
+		if (ABS(data.y) > res.z)res.z = +1 * data.y;
 
 	}
+
+	
 	return res;
 }
 
+
 //----------------------------------------LSM303AGR-C------------------------------------
 
+#define WHO_AM_I_M		0x4F //0x40
+#define CFG_REG_A_M		0x60
+#define CFG_REG_B_M		0x61
+#define CFG_REG_C_M		0x62
+#define OUTX_L_REG_M	0x68
+#define OUTX_H_REG_M	0x69
+#define OUTY_L_REG_M	0x6A
+#define OUTY_H_REG_M	0x6B
+#define OUTZ_L_REG_M	0x6C
+#define OUTZ_H_REG_M	0x6D
+
+struct xyz compass_offset;
+
+unsigned char lsm303_who_am_i() {
+	uint8_t rx_buff;
+	HAL_I2C_Mem_Read(&I2C_PORT, LSM303_READ, WHO_AM_I_M, 1, &rx_buff, 1, 10);
+	return rx_buff;
+}
+
+void init_lsm303() {
+	uint8_t tx_buff;
+
+	tx_buff = 0x00;
+	HAL_I2C_Mem_Write(&I2C_PORT, LSM303_WRITE, CFG_REG_A_M, 1, &tx_buff, 1, 10);
+
+	tx_buff = 0x04;
+	HAL_I2C_Mem_Write(&I2C_PORT, LSM303_WRITE, CFG_REG_B_M, 1, &tx_buff, 1, 10);
+
+	tx_buff = 0x10;
+	HAL_I2C_Mem_Write(&I2C_PORT, LSM303_WRITE, CFG_REG_C_M, 1, &tx_buff, 1, 10);
+
+	compass_offset.x = 0;
+	compass_offset.y = 0;
+	compass_offset.z = 0;
+}
+
+void set_lsm303_offset(struct xyz offset) {
+	compass_offset = offset;
+}
+
+struct xyza get_compass() {
+	struct xyza data = { 0 };
+	uint8_t rx_buff[6];
+
+	HAL_I2C_Mem_Read(&I2C_PORT, LSM303_READ, OUTX_L_REG_M, 1, rx_buff, 6, 100);
+	data.x = rx_buff[0] | (rx_buff[1] << 8);
+	data.z = rx_buff[2] | (rx_buff[3] << 8);
+	data.y = rx_buff[4] | (rx_buff[5] << 8);
+
+	//data.x *= +1;
+	data.z *= -1;
+
+	data.x -= compass_offset.x;
+	data.y -= compass_offset.y;
+	data.z -= compass_offset.z;
+
+	data.arg = atan2f(data.y, data.x);
+	return data;
+}
 //----------------------------------------VL53L0X----------------------------------------

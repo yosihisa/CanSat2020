@@ -1,4 +1,4 @@
-/*
+﻿/*
  * I2C_sensor.h
  *
  *  Created on: Oct 29, 2019
@@ -10,14 +10,14 @@
 
 #include "CanSat.h"
 
-#define INA226_WRITE 0x80
-#define INA226_READ  0x81
-
-#define LPS25H_WRITE 0xBA
-#define LPS25H_READ  0xBB
-
+#define INA226_WRITE  0x80
+#define INA226_READ   0x81
+#define LPS25H_WRITE  0xBA
+#define LPS25H_READ   0xBB
 #define ADXL375_WRITE 0xA6
 #define ADXL375_READ  0xA7
+#define LSM303_WRITE  0x3C
+#define LSM303_READ   0x3D
 
  //----------------------------------------INA226----------------------------------------
 unsigned short ina226_who_am_i(); //2260
@@ -41,6 +41,10 @@ void init_adxl375();
 struct xyz get_acceleration();
 
  //----------------------------------------LSM303AGR-C------------------------------------
+unsigned char lsm303_who_am_i(); //BD
+void init_lsm303();
+void set_lsm303_offset(struct xyz offset);
+struct xyza get_compass();
 
  //----------------------------------------VL53L0X----------------------------------------
 

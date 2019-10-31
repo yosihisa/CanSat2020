@@ -32,9 +32,6 @@ double	64
 */
 struct xyza {
 	short x, y, z;
-	short x_offset;
-	short y_offset;
-	short z_offset;
 	float arg;
 };
 
@@ -64,7 +61,7 @@ typedef struct {
 	short current;
 
 	struct gnss gnss_data;
-	struct xyza c_data;
+	struct xyza compass;
 	struct xyz accel;
 	unsigned long press;
 	short press_d;

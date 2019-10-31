@@ -162,13 +162,15 @@ int main(void)
 
 	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
-	  printf("G[%+5.3f,%+5.3f,%+5.3f]", ax,ay,az);
+	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
+	  printf("C[%+4d,%+4d,%+4d] %+3.2f ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
+
 
 	  printf("\n");
 
 	  cansat_data.log_num++;
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, cansat_data.log_num % 2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	  HAL_Delay(100);
+	  HAL_Delay(200);
   }
   /* USER CODE END 3 */
 }
