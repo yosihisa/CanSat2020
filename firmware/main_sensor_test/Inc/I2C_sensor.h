@@ -46,7 +46,4 @@ void init_lsm303();
 void set_lsm303_offset(struct xyz offset);
 struct xyza get_compass();
 
- //----------------------------------------VL53L0X----------------------------------------
-
-
 #endif /* I2C_SENSOR_H_ */

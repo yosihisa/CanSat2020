@@ -1,7 +1,8 @@
 #MicroXplorer Configuration settings - do not modify
 File.Version=6
-I2C1.IPParameters=Timing
-I2C1.Timing=0x00707CBB
+I2C1.I2C_Speed_Mode=I2C_Fast
+I2C1.IPParameters=Timing,I2C_Speed_Mode
+I2C1.Timing=0x00300F38
 KeepUserPlacement=false
 Mcu.Family=STM32L0
 Mcu.IP0=I2C1
@@ -172,8 +173,8 @@ ProjectManager.MainLocation=Src
 ProjectManager.NoMain=false
 ProjectManager.PreviousToolchain=
 ProjectManager.ProjectBuild=false
-ProjectManager.ProjectFileName=main.ioc
-ProjectManager.ProjectName=main
+ProjectManager.ProjectFileName=main_sensor_test.ioc
+ProjectManager.ProjectName=main_sensor_test
 ProjectManager.StackSize=0x400
 ProjectManager.TargetToolchain=STM32CubeIDE
 ProjectManager.ToolChainLocation=

@@ -23,4 +23,6 @@ void update_sensor(cansat_t* data){
 	data->compass = get_compass();
 
 	data->dist_ToF = -1;
+
+	data->flightPin = HAL_GPIO_ReadPin(FLIGHT_PIN_GPIO_Port, FLIGHT_PIN_Pin);
 }

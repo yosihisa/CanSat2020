@@ -159,12 +159,12 @@ int main(void)
 	  ay = (float)cansat_data.accel.y * 49 / 1000;
 	  az = (float)cansat_data.accel.z * 49 / 1000;
 
-
+	  printf("F%1d ", cansat_data.flightPin);
+	  printf("C[%+4d,%+4d,%+4d] %+3.2f ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
 	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
 	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
-	  printf("C[%+4d,%+4d,%+4d] %+3.2f ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
-	  printf("%3dcm", cansat_data.dist_ToF);
+	  printf("%3dcm ", cansat_data.dist_ToF);
 
 	  printf("\n");
 
@@ -241,7 +241,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00707CBB;
+  hi2c1.Init.Timing = 0x00300F38;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
