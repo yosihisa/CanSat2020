@@ -266,7 +266,7 @@ struct xyza get_compass() {
 	data.y -= compass_offset.y;
 	data.z -= compass_offset.z;
 
-	data.arg = atan2f(data.y, data.x);
+	data.arg = atan2f(data.y, data.x) * 180 / 3.141593;
 	return data;
 }
 //----------------------------------------VL53L0X----------------------------------------

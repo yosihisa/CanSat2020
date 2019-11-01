@@ -138,7 +138,9 @@ int main(void)
 
 
   init_I2C();
+  init_gnss();
 
+  set_gnssGoal(33890166, 130839927, 200);
   cansat_data.log_num = 0;
   /* USER CODE END 2 */
 
@@ -149,7 +151,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_SET);
 	  update_sensor(&cansat_data);
+	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_RESET);
 
 	  float temp = (get_temp() / 480.0) + 42.5;
 
@@ -160,8 +164,11 @@ int main(void)
 	  ay = (float)cansat_data.accel.y * 49 / 1000;
 	  az = (float)cansat_data.accel.z * 49 / 1000;
 
+	  printf("%02d:%02d:%02d.%03d ", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
+	  printf("GNSS[%c(%ld,%ld)] ", (cansat_data.gnss.state == 1 ? 'A' : 'V'), cansat_data.gnss.latitude, cansat_data.gnss.longitude);
+	  printf("S%3d %lddm(%+3d) ", cansat_data.gnss.speed, cansat_data.gnss.dist, cansat_data.gnss.arg);
 	  printf("F%1d ", cansat_data.flightPin);
-	  printf("C[%+4d,%+4d,%+4d] %+3.2f ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
+	  printf("C[%+4d,%+4d,%+4d] %+3d ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
 	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
 	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
@@ -170,8 +177,8 @@ int main(void)
 	  printf("\n");
 
 	  cansat_data.log_num++;
-	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, cansat_data.log_num % 2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	  HAL_Delay(200);
+	  //HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, cansat_data.log_num % 2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	  //HAL_Delay(200);
   }
   /* USER CODE END 3 */
 }
@@ -426,7 +433,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -434,7 +441,9 @@ static void MX_USART2_UART_Init(void)
   huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT|UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart2.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
+  huart2.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
     Error_Handler();

@@ -16,11 +16,6 @@
 #include "GNSS.h"
 #include "I2C_Sensor.h"
 
-#define I2C_PORT hi2c1
-
-extern I2C_HandleTypeDef I2C_PORT;
-
-
 /*
 int8	char
 int16	short
@@ -30,26 +25,6 @@ int64	long long
 float	32
 double	64
 */
-struct xyza {
-	short x, y, z;
-	float arg;
-};
-
-struct xyz {
-	short x, y, z;
-};
-
-struct gnss {
-	long long latitude;
-	long long longitude;
-	unsigned char hh, mm, ss;
-	unsigned short ms;
-
-	int mode;
-
-	float arg;
-	unsigned long long dist;
-};
 
 typedef struct {
 	unsigned long log_num;
@@ -60,7 +35,8 @@ typedef struct {
 	short voltage;
 	short current;
 
-	struct gnss gnss_data;
+	struct gnss gnss;
+
 	struct xyza compass;
 	struct xyz accel;
 	unsigned long press;

@@ -8,7 +8,11 @@
 #ifndef I2C_SENSOR_H_
 #define I2C_SENSOR_H_
 
-#include "CanSat.h"
+#include "stm32l0xx_hal.h"
+
+#define I2C_PORT hi2c1
+
+extern I2C_HandleTypeDef I2C_PORT;
 
 #define INA226_WRITE  0x80
 #define INA226_READ   0x81
@@ -18,6 +22,15 @@
 #define ADXL375_READ  0xA7
 #define LSM303_WRITE  0x3C
 #define LSM303_READ   0x3D
+
+struct xyza {
+	short x, y, z;
+	short arg;
+};
+
+struct xyz {
+	short x, y, z;
+};
 
  //----------------------------------------INA226----------------------------------------
 unsigned short ina226_who_am_i(); //2260
