@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  * _Setting.h
  *
  *  Created on: Nov 3, 2019
@@ -8,44 +8,42 @@
 #ifndef SETTING_H_
 #define SETTING_H_
 
-#define RESOLUTION QVGA
+#define RESOLUTION VGA
 
 
-//------ƒS[ƒ‹-----
-//F‘Š‚Ì”ÍˆÍ
+//------ã‚´ãƒ¼ãƒ«-----
+//è‰²ç›¸ã®ç¯„å›²
 #define G_H_MIN_1 0
 #define G_H_MAX_1 10
 
 #define G_H_MIN_2 330
 #define G_H_MAX_2 360
 
-//Ê“x‚Ì”ÍˆÍ
-#define G_S_MIN 45
-#define G_S_MAX 100
+//å½©åº¦ã®ç¯„å›²
+#define G_S_MIN 115
+#define G_S_MAX 256
 
-//–¾“x‚Ì”ÍˆÍ
-#define G_V_MIN 30
-#define G_V_MAX 100
+//æ˜åº¦ã®ç¯„å›²
+#define G_V_MIN 77
+#define G_V_MAX 256
 
-//------ƒpƒ‰ƒVƒ…[ƒg-----
-//F‘Š‚Ì”ÍˆÍ
+//------ãƒ‘ãƒ©ã‚·ãƒ¥ãƒ¼ãƒˆ-----
+//è‰²ç›¸ã®ç¯„å›²
 #define P_H_MIN_1 0	
 #define P_H_MAX_1 10
 
 #define P_H_MIN_2 330
 #define P_H_MAX_2 360
 
-//Ê“x‚Ì”ÍˆÍ
-#define P_S_MIN 45
-#define P_S_MAX 100
+//å½©åº¦ã®ç¯„å›²
+#define P_S_MIN 115
+#define P_S_MAX 256
 
-//–¾“x‚Ì”ÍˆÍ
-#define P_V_MIN 30
-#define P_V_MAX 100
+//æ˜åº¦ã®ç¯„å›²
+#define P_V_MIN 77
+#define P_V_MAX 256
 
 #define HEIGHT 480
 #define WIDTH  640
-
-
 
 #endif /* SETTING_H_ */

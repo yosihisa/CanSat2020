@@ -74,7 +74,7 @@ UINT out_func(JDEC* jd, void* bitmap, JRECT* rect)
 	uint8_t *src;
 	uint32_t width, height,bitshift;
 	uint8_t r, g, b;
-	double h=0, s, v; //H:色相 S:彩度 V:明度
+	short h=0, s, v; //H:色相 S:彩度 V:明度
 
 	src = (BYTE*)bitmap;
 	for (height = 0; height < (rect->bottom - rect->top + 1); height++) {
@@ -86,24 +86,25 @@ UINT out_func(JDEC* jd, void* bitmap, JRECT* rect)
 			b = (BYTE)*(src + 3 * (height*(rect->right - rect->left + 1) + width) + 2);
 
 			//HSV変換
-			double MAX = max((max(r, g)), b);
-			double MIN = min((min(r, g)), b);
-			v = MAX / 256 * 100;
+			BYTE MAX = max((max(r, g)), b);
+			BYTE MIN = min((min(r, g)), b);
+			v = MAX;
 
 			if (MAX == MIN) {
 				h = 0;
 				s = 0;
 			} else {
-				if (MAX == r) h = 60.0*(g - b) / (MAX - MIN) + 0;
-				else if (MAX == g) h = 60.0*(b - r) / (MAX - MIN) + 120.0;
-				else if (MAX == b) h = 60.0*(r - g) / (MAX - MIN) + 240.0;
+				if (MAX == r) h = 60*(g - b) / (MAX - MIN) + 0;
+				else if (MAX == g) h = 60*(b - r) / (MAX - MIN) + 120;
+				else if (MAX == b) h = 60*(r - g) / (MAX - MIN) + 240;
 
-				if (h > 360.0) h = h - 360.0;
-				else if (h < 0) h = h + 360.0;
-				s = (MAX - MIN) / MAX * 100.0;
+				if (h > 360) h = h - 360;
+				else if (h < 0) h = h + 360;
+				s = (MAX - MIN) * 256 / MAX;
+
 			}
 
-			if (h > 360.0)h -= 360;
+			if (h > 360)h -= 360;
 
 			if ((h >= H_MIN_1 && h <= H_MAX_1)|| (h >= H_MIN_2 && h <= H_MAX_2)) {
 				if ((s >= S_MIN && s <= S_MAX) && (v >= V_MIN && v <= V_MAX)) {
