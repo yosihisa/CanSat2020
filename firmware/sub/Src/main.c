@@ -24,7 +24,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
+#include "sd.h"
+#include "C1098.h"
+#include "jpeg_SW.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +54,10 @@ UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
-
+void __io_putchar(uint8_t ch) {
+	HAL_UART_Transmit(&huart1, &ch, 1, 1);
+	//1:PC 3:main 6:cam
+}
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,7 +111,24 @@ int main(void)
   MX_USART6_UART_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
+  
+  IODEV jpeg;
+  uint32_t jpeg_num;
+  printf("SUB\n");
 
+  while (1) {
+	  CAMERARESULT  res = init_C1098();
+	  if (res == CAMERA_OK)break;
+	  else printf("init_C1098() error: %u \n", res);
+  }
+
+  printf("Init Camera\n");
+
+  sd_init();
+
+  changeMode(GOAL);
+
+  int c = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,6 +138,46 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  GPIO_PinState en = HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin);
+	  GPIO_PinState mode = HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin);
+
+	  //Change Target Color
+	  changeMode(mode);
+
+	  printf("%4d ,%s,%s  ", c, (en == GPIO_PIN_SET ? "Enable" : "Disable"), (mode == GOAL ? "RED" : "PINK"));
+
+	  //Image processing Enable
+	  if (en == GPIO_PIN_SET) {
+
+		  for (int n = 0; n < 5; n++) {
+			  while (snapShot() != CAMERA_OK);
+			  getPicture(jpeg.data, MAX_SIZE, &jpeg.size);
+			  if (jpeg.size > 1024)break;
+		  }
+
+		  int res = sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
+
+		  printf("getPicture %ldB  sd_writeJpg = %d NUM=%05ld.jpg  ", jpeg.size, res, jpeg_num);
+
+		  decode(&jpeg);
+
+		  printf("xc=%3ld yc=%3ld s=%5ld ", jpeg.xc, jpeg.yc, jpeg.s);
+
+	  }
+	  //Image processing Disable
+	  else {
+
+	  }
+	  
+	  //LOG DATA
+	  char str[50];
+	  sprintf(str,"%4d ,%s,%s\n", c, (en == GPIO_PIN_SET ? "Enable" : "Disable"), (mode == GPIO_PIN_RESET ? "RED" : "PINK"));
+	  if (sd_writeLog(str, strlen(str)) == FR_OK) {
+		  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	  }
+
+	  printf("\n");
+	  c++;
   }
   /* USER CODE END 3 */
 }
@@ -135,9 +199,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 192;
+  RCC_OscInitStruct.PLL.PLLN = 240;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLQ = 5;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -146,12 +210,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -178,7 +242,7 @@ static void MX_SDIO_SD_Init(void)
   hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
   hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
   hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd.Init.ClockDiv = 0;
+  hsd.Init.ClockDiv = 8;
   /* USER CODE BEGIN SDIO_Init 2 */
 
   /* USER CODE END SDIO_Init 2 */
@@ -300,20 +364,20 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : EN_Pin */
-  GPIO_InitStruct.Pin = EN_Pin;
+  /*Configure GPIO pins : MODE_Pin EN_Pin */
+  GPIO_InitStruct.Pin = MODE_Pin|EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(EN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  /*Configure GPIO pin : LED_Pin */
+  GPIO_InitStruct.Pin = LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
 }
 

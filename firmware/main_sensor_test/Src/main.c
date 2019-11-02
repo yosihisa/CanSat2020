@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "cansat.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,6 +120,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   cansat_t cansat_data;
+
+  HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_RESET);  //SUB Disable
+  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_SET);//SUB Mode PINK
+
   HAL_Delay(500);
 
   printf("Hello Main MCU Sensor test!\n");
@@ -142,6 +147,9 @@ int main(void)
 
   set_gnssGoal(33890166, 130839927, 200);
   cansat_data.log_num = 0;
+
+  HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_SET); //SUB Enable
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,6 +184,13 @@ int main(void)
 
 	  printf("\n");
 
+	  char str[256];
+	  sprintf(str, "%02d:%02d:%02d.%03d ----------------------------------------------------------------------------------------------------------------------------------\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
+	  HAL_UART_Transmit(&huart4, (uint8_t*)str, strlen(str), 10);
+
+	  if (cansat_data.log_num == 50) {
+		  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET); //SUB Mode RED
+	  }
 	  cansat_data.log_num++;
 	  //HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, cansat_data.log_num % 2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 	  //HAL_Delay(200);
@@ -535,11 +550,15 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, LED_L0_Pin|SUB_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LED_TX_Pin|Nichrome_Pin, GPIO_PIN_RESET);
@@ -556,6 +575,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(FLIGHT_PIN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SUB_MODE_Pin */
+  GPIO_InitStruct.Pin = SUB_MODE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SUB_MODE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LED_TX_Pin Nichrome_Pin */
   GPIO_InitStruct.Pin = LED_TX_Pin|Nichrome_Pin;

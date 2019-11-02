@@ -9,7 +9,6 @@
 #include "GNSS.h"
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define MSG_MAX 100

@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define FLIGHT_PIN_GPIO_Port GPIOC
 #define SUB_EN_Pin GPIO_PIN_15
 #define SUB_EN_GPIO_Port GPIOC
+#define SUB_MODE_Pin GPIO_PIN_0
+#define SUB_MODE_GPIO_Port GPIOH
 #define SUB_TX_Pin GPIO_PIN_0
 #define SUB_TX_GPIO_Port GPIOA
 #define SUB_RX_Pin GPIO_PIN_1
