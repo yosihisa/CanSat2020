@@ -185,15 +185,13 @@ int main(void)
 	  printf("\n");
 
 	  char str[256];
-	  sprintf(str, "%02d:%02d:%02d.%03d ----------------------------------------------------------------------------------------------------------------------------------\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
+	  sprintf(str, "%02d:%02d:%02d.%03d 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789######\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
 	  HAL_UART_Transmit(&huart4, (uint8_t*)str, strlen(str), 10);
 
 	  if (cansat_data.log_num == 50) {
 		  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET); //SUB Mode RED
 	  }
 	  cansat_data.log_num++;
-	  //HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, cansat_data.log_num % 2 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	  //HAL_Delay(200);
   }
   /* USER CODE END 3 */
 }
@@ -493,7 +491,11 @@ static void MX_USART4_UART_Init(void)
   huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_SWAP_INIT|UART_ADVFEATURE_RXOVERRUNDISABLE_INIT
+                              |UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart4.AdvancedInit.Swap = UART_ADVFEATURE_SWAP_ENABLE;
+  huart4.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
+  huart4.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart4) != HAL_OK)
   {
     Error_Handler();

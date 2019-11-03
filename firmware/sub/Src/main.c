@@ -69,11 +69,25 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
+#define MAIN_RX_BUFF_SIZE 128
+#define MAIN_RX_BUFF_NUM 32
+static int main_rx_buff_index;
+static unsigned int count_rxIT;
+static uint8_t main_rx_buff[MAIN_RX_BUFF_SIZE * MAIN_RX_BUFF_NUM];
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* UartHandle) {
+	if (UartHandle->Instance == USART3) {
+		count_rxIT++;
+		main_rx_buff_index++;
+		main_rx_buff_index = main_rx_buff_index % MAIN_RX_BUFF_NUM;
+		HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -112,9 +126,11 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   
-  IODEV jpeg;
+  static IODEV jpeg;
   uint32_t jpeg_num;
   printf("SUB\n");
+
+  memset(&main_rx_buff[0], 35, MAIN_RX_BUFF_SIZE * MAIN_RX_BUFF_NUM);
 
   while (1) {
 	  CAMERARESULT  res = init_C1098();
@@ -129,6 +145,12 @@ int main(void)
   changeMode(GOAL);
 
   int c = 0;
+
+  count_rxIT = 0;
+  main_rx_buff_index = 0;
+  uint8_t before_index = main_rx_buff_index;
+  HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index* MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -138,13 +160,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  
 	  GPIO_PinState en = HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin);
 	  GPIO_PinState mode = HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin);
 
 	  //Change Target Color
 	  changeMode(mode);
 
-	  printf("%4d ,%s,%s  ", c, (en == GPIO_PIN_SET ? "Enable" : "Disable"), (mode == GOAL ? "RED" : "PINK"));
+	  printf("%4d %c%c  ", c, (en == GPIO_PIN_SET ? 'E' : 'C'), (mode == GOAL ? 'G' : 'P'));
 
 	  //Image processing Enable
 	  if (en == GPIO_PIN_SET) {
@@ -157,7 +181,11 @@ int main(void)
 
 		  int res = sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
 
-		  printf("getPicture %ldB  sd_writeJpg = %d NUM=%05ld.jpg  ", jpeg.size, res, jpeg_num);
+		  if (res == FR_OK) {
+			  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		  }
+
+		  printf("%ldB %05ld.jpg  ", jpeg.size, jpeg_num);
 
 		  decode(&jpeg);
 
@@ -166,18 +194,28 @@ int main(void)
 	  }
 	  //Image processing Disable
 	  else {
-
+		  HAL_Delay(200);
 	  }
 	  
 	  //LOG DATA
-	  char str[50];
-	  sprintf(str,"%4d ,%s,%s\n", c, (en == GPIO_PIN_SET ? "Enable" : "Disable"), (mode == GPIO_PIN_RESET ? "RED" : "PINK"));
-	  if (sd_writeLog(str, strlen(str)) == FR_OK) {
-		  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	  printf("c = %d", count_rxIT);
+	  while (1) {
+		  if (before_index == main_rx_buff_index)break;
+		  sd_writeLog((char*)&main_rx_buff[before_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+		  before_index++;
+		  before_index = before_index % MAIN_RX_BUFF_NUM;
 	  }
+	  if (c != 0)HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	  count_rxIT = 0;
+
 
 	  printf("\n");
 	  c++;
+	  
+	  /*
+	  HAL_UART_Receive(&huart3, &main_rx_buff[0], MAIN_RX_BUFF_SIZE, 2000);
+	  HAL_UART_Transmit(&huart1, &main_rx_buff[0], MAIN_RX_BUFF_SIZE, 200);
+	  */
   }
   /* USER CODE END 3 */
 }

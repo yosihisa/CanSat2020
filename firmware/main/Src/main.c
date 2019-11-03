@@ -303,7 +303,7 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIMEx_RemapConfig(&htim3, TIM3_TI1_GPIO) != HAL_OK)
+  if (HAL_TIMEx_RemapConfig(&htim3, TIM22_TI1_GPIO) != HAL_OK)
   {
     Error_Handler();
   }

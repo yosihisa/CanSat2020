@@ -8,7 +8,7 @@
 
 uint8_t RED_bool[HEIGHT][WIDTH/8];
 
-#define MAX_SIZE 60*1024
+#define MAX_SIZE 45*1024
 
 typedef struct {
 	uint8_t data[MAX_SIZE];
