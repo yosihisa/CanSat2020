@@ -57,6 +57,7 @@ NVIC.NonMaskableInt_IRQn=true\:0\:0\:false\:false\:true\:false\:false
 NVIC.PendSV_IRQn=true\:0\:0\:false\:false\:true\:false\:false
 NVIC.SVC_IRQn=true\:0\:0\:false\:false\:true\:false\:false
 NVIC.SysTick_IRQn=true\:0\:0\:false\:false\:true\:false\:true
+NVIC.USART4_5_IRQn=true\:1\:0\:true\:false\:true\:true\:true
 PA0.GPIOParameters=GPIO_PuPd,GPIO_Label
 PA0.GPIO_Label=SUB_TX
 PA0.GPIO_PuPd=GPIO_PULLUP

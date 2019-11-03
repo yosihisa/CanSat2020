@@ -85,6 +85,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* UartHandle) {
 		count_rxIT++;
 		main_rx_buff_index++;
 		main_rx_buff_index = main_rx_buff_index % MAIN_RX_BUFF_NUM;
+		__HAL_UART_CLEAR_OREFLAG(&huart3);
+		__HAL_UART_CLEAR_NEFLAG(&huart3);
+		__HAL_UART_CLEAR_FEFLAG(&huart3);
+		__HAL_UART_DISABLE_IT(&huart3, UART_IT_PE);
+		__HAL_UART_DISABLE_IT(&huart3, UART_IT_ERR);
 	}
 	HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 
@@ -128,7 +133,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   
   static IODEV jpeg;
-  uint32_t jpeg_num;
+  uint32_t jpeg_num = 0;
   printf("SUB\n");
 
   memset(&main_rx_buff[0], 35, MAIN_RX_BUFF_SIZE * MAIN_RX_BUFF_NUM);
@@ -150,7 +155,11 @@ int main(void)
   count_rxIT = 0;
   main_rx_buff_index = 0;
   uint8_t before_index = main_rx_buff_index;
-
+  __HAL_UART_CLEAR_OREFLAG(&huart3);
+  __HAL_UART_CLEAR_NEFLAG(&huart3);
+  __HAL_UART_CLEAR_FEFLAG(&huart3);
+  __HAL_UART_DISABLE_IT(&huart3, UART_IT_PE);
+  __HAL_UART_DISABLE_IT(&huart3, UART_IT_ERR);
   HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index* MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
   /* USER CODE END 2 */
 
@@ -171,32 +180,24 @@ int main(void)
 
 	  printf("%4d %c%c  ", c, (en == GPIO_PIN_SET ? 'E' : 'C'), (mode == GOAL ? 'G' : 'P'));
 
+
+	  for (int n = 0; n < 5; n++) {
+		  while (snapShot() != CAMERA_OK);
+		  getPicture(jpeg.data, MAX_SIZE, &jpeg.size);
+		  if (jpeg.size > 1024)break;
+	  }
+
 	  //Image processing Enable
 	  if (en == GPIO_PIN_SET) {
-
-		  for (int n = 0; n < 5; n++) {
-			  while (snapShot() != CAMERA_OK);
-			  getPicture(jpeg.data, MAX_SIZE, &jpeg.size);
-			  if (jpeg.size > 1024)break;
-		  }
-
-		  int res = sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
-
-		  if (res == FR_OK) {
-			  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-		  }
-
-		  printf("%ldB %05ld.jpg  ", jpeg.size, jpeg_num);
-
-		  decode(&jpeg);
-
-		  printf("xc=%3ld yc=%3ld s=%5ld ", jpeg.xc, jpeg.yc, jpeg.s);
-
+		  sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
 	  }
-	  //Image processing Disable
-	  else {
-		  HAL_Delay(200);
+	  
+	  if (decode(&jpeg) == 0) {
+		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 	  }
+	  printf("%ldB %05ld.jpg  ", jpeg.size, jpeg_num);
+	  printf("xc=%3ld yc=%3ld s=%5ld ", jpeg.xc, jpeg.yc, jpeg.s);
+
 
 	  //Transmit Image Data
 	  if (HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin) == GPIO_PIN_SET) {
@@ -225,6 +226,9 @@ int main(void)
 		  fw_res = sd_writeLog((char*)& main_rx_buff[before_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 		  before_index++;
 		  before_index = before_index % MAIN_RX_BUFF_NUM;
+	  }
+	  if (count_rxIT == 0) {
+		  HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 	  }
 	  count_rxIT = 0;
 

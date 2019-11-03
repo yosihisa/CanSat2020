@@ -27,6 +27,10 @@ double	64
 */
 
 typedef struct {
+	unsigned short xc, yc, s, name;
+}img_t;
+
+typedef struct {
 	unsigned long log_num;
 
 	short mode;
@@ -53,6 +57,8 @@ typedef struct {
 	short motor_R_ref;
 
 	unsigned char nichrome;
+
+	img_t img;
 
 }cansat_t;
 

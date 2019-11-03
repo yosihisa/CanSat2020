@@ -79,6 +79,22 @@ static void MX_USART5_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+img_t img_data = { 0 };
+uint8_t sub_rx_buff[10];
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* UartHandle) {
+	if (UartHandle->Instance == USART4) {
+		img_data.name = (sub_rx_buff[1] << 8) + sub_rx_buff[2];
+		img_data.xc   = (sub_rx_buff[3] << 8) + sub_rx_buff[4];
+		img_data.yc   = (sub_rx_buff[5] << 8) + sub_rx_buff[6];
+		img_data.s    = (sub_rx_buff[7] << 8) + sub_rx_buff[8];
+		__HAL_UART_CLEAR_OREFLAG(&huart4);
+		__HAL_UART_CLEAR_NEFLAG(&huart4);
+		__HAL_UART_CLEAR_FEFLAG(&huart4);
+		__HAL_UART_DISABLE_IT(&huart4, UART_IT_PE);
+		__HAL_UART_DISABLE_IT(&huart4, UART_IT_ERR);
+		HAL_UART_Receive_IT(&huart4, sub_rx_buff, 10);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -118,8 +134,8 @@ int main(void)
   MX_USART4_UART_Init();
   MX_USART5_UART_Init();
   /* USER CODE BEGIN 2 */
-
   cansat_t cansat_data;
+
 
   HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_RESET);  //SUB Disable
   HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_SET);//SUB Mode PINK
@@ -149,6 +165,12 @@ int main(void)
   cansat_data.log_num = 0;
 
   HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_SET); //SUB Enable
+  __HAL_UART_CLEAR_OREFLAG(&huart4);
+  __HAL_UART_CLEAR_NEFLAG(&huart4);
+  __HAL_UART_CLEAR_FEFLAG(&huart4);
+  __HAL_UART_DISABLE_IT(&huart4, UART_IT_PE);
+  __HAL_UART_DISABLE_IT(&huart4, UART_IT_ERR);
+  HAL_UART_Receive_IT(&huart4, sub_rx_buff, 10);
 
   /* USER CODE END 2 */
 
@@ -161,6 +183,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_SET);
 	  update_sensor(&cansat_data);
+	  cansat_data.img = img_data;
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_RESET);
 
 	  float temp = (get_temp() / 480.0) + 42.5;
@@ -181,6 +204,8 @@ int main(void)
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
 	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
 	  printf("%3dcm ", cansat_data.dist_ToF);
+	  printf("%05d.jpg xc=%3d yc=%3d s=%4d ", cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s);
+
 
 	  printf("\n");
 
@@ -372,10 +397,10 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIMEx_RemapConfig(&htim3, TIM22_TI1_GPIO) != HAL_OK)
+  /*if (HAL_TIMEx_RemapConfig(&htim3, TIM3_TI1_GPIO) != HAL_OK)
   {
     Error_Handler();
-  }
+  }*/
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
