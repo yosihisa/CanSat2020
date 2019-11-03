@@ -70,7 +70,7 @@ static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 #define MAIN_RX_BUFF_SIZE 128
-#define MAIN_RX_BUFF_NUM 32
+#define MAIN_RX_BUFF_NUM 40
 static int main_rx_buff_index;
 static unsigned int count_rxIT;
 static uint8_t main_rx_buff[MAIN_RX_BUFF_SIZE * MAIN_RX_BUFF_NUM];
@@ -85,8 +85,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* UartHandle) {
 		count_rxIT++;
 		main_rx_buff_index++;
 		main_rx_buff_index = main_rx_buff_index % MAIN_RX_BUFF_NUM;
-		HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 	}
+	HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+
 }
 /* USER CODE END 0 */
 
@@ -149,8 +150,8 @@ int main(void)
   count_rxIT = 0;
   main_rx_buff_index = 0;
   uint8_t before_index = main_rx_buff_index;
-  HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index* MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 
+  HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index* MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -182,7 +183,7 @@ int main(void)
 		  int res = sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
 
 		  if (res == FR_OK) {
-			  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 		  }
 
 		  printf("%ldB %05ld.jpg  ", jpeg.size, jpeg_num);
@@ -196,16 +197,35 @@ int main(void)
 	  else {
 		  HAL_Delay(200);
 	  }
-	  
+
+	  //Transmit Image Data
+	  if (HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin) == GPIO_PIN_SET) {
+		  uint8_t tx_buff[10];
+		  tx_buff[0] = 'O';
+		  tx_buff[1] = (uint8_t)(jpeg_num >> 8);
+		  tx_buff[2] = (uint8_t)(jpeg_num );
+		  tx_buff[3] = (uint8_t)(jpeg.xc >> 8);
+		  tx_buff[4] = (uint8_t)(jpeg.xc);
+		  tx_buff[5] = (uint8_t)(jpeg.yc >> 8);
+		  tx_buff[6] = (uint8_t)(jpeg.yc);
+		  tx_buff[7] = (uint8_t)(jpeg.s >> 8);
+		  tx_buff[8] = (uint8_t)(jpeg.s);
+		  tx_buff[9] = 'o';
+		  HAL_UART_Transmit(&huart3, tx_buff, 10, 15);
+	  }
+
 	  //LOG DATA
 	  printf("c = %d", count_rxIT);
+	  int fw_res = 0;
 	  while (1) {
-		  if (before_index == main_rx_buff_index)break;
-		  sd_writeLog((char*)&main_rx_buff[before_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+		  if (before_index == main_rx_buff_index) {
+			  if (fw_res == 0)HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+			  break;
+		  }
+		  fw_res = sd_writeLog((char*)& main_rx_buff[before_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 		  before_index++;
 		  before_index = before_index % MAIN_RX_BUFF_NUM;
 	  }
-	  if (c != 0)HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 	  count_rxIT = 0;
 
 
