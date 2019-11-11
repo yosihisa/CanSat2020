@@ -27,7 +27,8 @@ double	64
 */
 
 typedef struct {
-	unsigned short xc, yc, s, name;
+	unsigned short xc, yc, name;
+	uint32_t s;
 }img_t;
 
 typedef struct {

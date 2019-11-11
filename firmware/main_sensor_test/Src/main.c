@@ -58,7 +58,7 @@ UART_HandleTypeDef huart5;
 /* USER CODE BEGIN PV */
 void __io_putchar(uint8_t ch) {
 	HAL_UART_Transmit(&huart5, &ch, 1, 1);
-	HAL_UART_Transmit(&huart1, &ch, 1, 1); //COM
+	//HAL_UART_Transmit(&huart1, &ch, 1, 1); //COM
 }
 /* USER CODE END PV */
 
@@ -79,20 +79,29 @@ static void MX_USART5_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-img_t img_data = { 0 };
-uint8_t sub_rx_buff[10];
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef* UartHandle) {
-	if (UartHandle->Instance == USART4) {
+static img_t img_data = { 0 };
+static uint8_t sub_rx_buff[11] = { 0 };
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	for (int i = 0; i < 10; i++) {
+		HAL_UART_Receive(&huart4, &sub_rx_buff[0], 1, 50);
+		if (sub_rx_buff[0] == '$')break;
+	}
+	HAL_UART_Receive(&huart4, &sub_rx_buff[0], 11, 50);
+	if (sub_rx_buff[0] == 'O') {
 		img_data.name = (sub_rx_buff[1] << 8) + sub_rx_buff[2];
-		img_data.xc   = (sub_rx_buff[3] << 8) + sub_rx_buff[4];
-		img_data.yc   = (sub_rx_buff[5] << 8) + sub_rx_buff[6];
-		img_data.s    = (sub_rx_buff[7] << 8) + sub_rx_buff[8];
-		__HAL_UART_CLEAR_OREFLAG(&huart4);
-		__HAL_UART_CLEAR_NEFLAG(&huart4);
-		__HAL_UART_CLEAR_FEFLAG(&huart4);
-		__HAL_UART_DISABLE_IT(&huart4, UART_IT_PE);
-		__HAL_UART_DISABLE_IT(&huart4, UART_IT_ERR);
-		HAL_UART_Receive_IT(&huart4, sub_rx_buff, 10);
+		img_data.xc = (sub_rx_buff[3] << 8) + sub_rx_buff[4];
+		img_data.yc = (sub_rx_buff[5] << 8) + sub_rx_buff[6];
+		img_data.s = (sub_rx_buff[7] << 16) + (sub_rx_buff[8] << 8) + sub_rx_buff[9];
+	}
+	else if (sub_rx_buff[0] == 'o') {
+		img_data.name = (sub_rx_buff[2] << 8) + sub_rx_buff[3];
+		img_data.xc = (sub_rx_buff[4] << 8) + sub_rx_buff[5];
+		img_data.yc = (sub_rx_buff[6] << 8) + sub_rx_buff[7];
+		img_data.s = (sub_rx_buff[8] << 16) + (sub_rx_buff[9] << 8) + sub_rx_buff[10];
+	}
+	else {
+		return;
 	}
 }
 /* USER CODE END 0 */
@@ -134,10 +143,13 @@ int main(void)
   MX_USART4_UART_Init();
   MX_USART5_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
+
   cansat_t cansat_data;
 
 
-  HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_RESET);  //SUB Disable
+  ///HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_RESET);  //SUB Disable
   HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_SET);//SUB Mode PINK
 
   HAL_Delay(500);
@@ -153,10 +165,47 @@ int main(void)
   HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(Nichrome_GPIO_Port, Nichrome_Pin, GPIO_PIN_RESET);
 
-  printf("INA226  = %02X \n", ina226_who_am_i());
-  printf("LPS25HB = %01X \n", lps25h_who_am_i());
-  printf("ADXL375 = %01X \n", adxl375_who_am_i());
+  printf("INA226  = %02X\n", ina226_who_am_i());
+  printf("LPS25HB = %01X\n", lps25h_who_am_i());
+  printf("ADXL375 = %01X\n", adxl375_who_am_i());
+  printf("JEDECID = %lX\n", flash_read_ID());
 
+  
+  for (uint32_t a = 0; a <= 0xFFFF; a++) {
+	  uint8_t data[256];
+	  for (int i = 0; i < 256; i++) {
+		  data[i] = 16 * ((i + a) % 16) + (i + a) % 16;
+	  }
+	  flash_write_page(a, data);
+	  printf("Write 0x%04lX\n", a);
+  }
+
+  for (uint32_t a = 0; a <= 0xFFFF; a++) {
+	  uint8_t data[256];
+	  flash_read_page(a, data);
+	  printf("0x%04lX ", a);
+	  for (int i = 0; i < 256; i++) {
+		  printf("%02X", data[i]);
+	  }
+	  printf("\n");
+
+  }
+
+  for (uint32_t a = 0; a <= 0xFF; a++) {
+	  flash_erase_64k(a);
+	  printf("Erase 0x%02lX00\n", a);
+  }
+
+  for (uint32_t a = 0; a <= 0xFFFF; a++) {
+	  uint8_t data[256];
+	  flash_read_page(a, data);
+	  printf("0x%04lX ", a);
+	  for (int i = 0; i < 256; i++) {
+		  printf("%02X", data[i]);
+	  }
+	  printf("\n");
+
+  }
 
   init_I2C();
   init_gnss();
@@ -164,14 +213,7 @@ int main(void)
   set_gnssGoal(33890166, 130839927, 200);
   cansat_data.log_num = 0;
 
-  HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_SET); //SUB Enable
-  __HAL_UART_CLEAR_OREFLAG(&huart4);
-  __HAL_UART_CLEAR_NEFLAG(&huart4);
-  __HAL_UART_CLEAR_FEFLAG(&huart4);
-  __HAL_UART_DISABLE_IT(&huart4, UART_IT_PE);
-  __HAL_UART_DISABLE_IT(&huart4, UART_IT_ERR);
-  HAL_UART_Receive_IT(&huart4, sub_rx_buff, 10);
-
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -204,14 +246,23 @@ int main(void)
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
 	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
 	  printf("%3dcm ", cansat_data.dist_ToF);
-	  printf("%05d.jpg xc=%3d yc=%3d s=%4d ", cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s);
+	  printf("%05d.jpg xc=%3d yc=%3d s=%4ld ", cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s);
 
 
 	  printf("\n");
 
-	  char str[256];
-	  sprintf(str, "%02d:%02d:%02d.%03d 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789######\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
+	  char str[400];
+	  sprintf(str, "%02d,%02d,%02d.%03d,%4d,%3d, %d,%7ld,%7ld, %d,%ld,%d,%d,%d ,%5.2f,%8.3f, %+5.3f,%+5.3f,%+5.3f, %d,%d,%d,%ld\n",
+		  cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms, cansat_data.voltage, cansat_data.current, 
+		  cansat_data.gnss.state , cansat_data.gnss.latitude, cansat_data.gnss.longitude,
+		  cansat_data.gnss.speed, cansat_data.gnss.dist, cansat_data.gnss.arg, cansat_data.flightPin, cansat_data.compass.arg,
+		  temp, press,
+		  ax, ay, az,
+		  cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s
+	  );
 	  HAL_UART_Transmit(&huart4, (uint8_t*)str, strlen(str), 10);
+	  HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), 10);
+
 
 	  if (cansat_data.log_num == 50) {
 		  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET); //SUB Mode RED
@@ -339,8 +390,8 @@ static void MX_SPI2_Init(void)
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -582,7 +633,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, LED_L0_Pin|SUB_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET);
@@ -590,18 +641,27 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LED_TX_Pin|Nichrome_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LED_L0_Pin SUB_EN_Pin */
-  GPIO_InitStruct.Pin = LED_L0_Pin|SUB_EN_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : LED_L0_Pin */
+  GPIO_InitStruct.Pin = LED_L0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED_L0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : FLIGHT_PIN_Pin */
   GPIO_InitStruct.Pin = FLIGHT_PIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(FLIGHT_PIN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SUB_IT_Pin */
+  GPIO_InitStruct.Pin = SUB_IT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SUB_IT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SUB_MODE_Pin */
   GPIO_InitStruct.Pin = SUB_MODE_Pin;
@@ -616,6 +676,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SPI2_CS_Pin */
+  GPIO_InitStruct.Pin = SPI2_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 

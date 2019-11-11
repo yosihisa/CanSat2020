@@ -59,8 +59,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define MODE_Pin GPIO_PIN_1
 #define MODE_GPIO_Port GPIOB
-#define EN_Pin GPIO_PIN_2
-#define EN_GPIO_Port GPIOB
+#define MAIN_IT_Pin GPIO_PIN_2
+#define MAIN_IT_GPIO_Port GPIOB
 #define MAIN_TX_Pin GPIO_PIN_10
 #define MAIN_TX_GPIO_Port GPIOB
 #define MAIN_RX_Pin GPIO_PIN_11

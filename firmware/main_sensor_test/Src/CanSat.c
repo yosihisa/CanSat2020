@@ -1,4 +1,3 @@
-#include "CanSat.h"
 /*
  * CanSat.c
  *
@@ -6,6 +5,7 @@
  *      Author: yosihisa
  */
 
+#include "CanSat.h"
 
 void init_I2C(){
 	set_UVP(6400);
@@ -15,6 +15,7 @@ void init_I2C(){
 }
 
 void update_sensor(cansat_t* data){
+
 	data->voltage = get_voltage();
 	data->current = get_current();
 
@@ -27,4 +28,5 @@ void update_sensor(cansat_t* data){
 	data->flightPin = HAL_GPIO_ReadPin(FLIGHT_PIN_GPIO_Port, FLIGHT_PIN_Pin);
 
 	get_gnss(&data->gnss, 200);
+
 }

@@ -94,6 +94,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* UartHandle) {
 	HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
 
 }
+
+void reset_main_uart() {
+	HAL_UART_DeInit(&huart3);
+	printf("HAL_UART_DeInit(&huart3)\n");
+	HAL_UART_Init(&huart3);
+	printf("HAL_UART_Init(&huart3)\n");
+	__HAL_UART_CLEAR_OREFLAG(&huart3);
+	__HAL_UART_CLEAR_NEFLAG(&huart3);
+	__HAL_UART_CLEAR_FEFLAG(&huart3);
+	__HAL_UART_DISABLE_IT(&huart3, UART_IT_PE);
+	__HAL_UART_DISABLE_IT(&huart3, UART_IT_ERR);
+	HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+}
 /* USER CODE END 0 */
 
 /**
@@ -151,7 +164,7 @@ int main(void)
   changeMode(GOAL);
 
   int c = 0;
-
+  int error_count = 0;
   count_rxIT = 0;
   main_rx_buff_index = 0;
   uint8_t before_index = main_rx_buff_index;
@@ -172,13 +185,14 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	  
-	  GPIO_PinState en = HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin);
+	  //GPIO_PinState en = HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin);
 	  GPIO_PinState mode = HAL_GPIO_ReadPin(MODE_GPIO_Port, MODE_Pin);
 
 	  //Change Target Color
 	  changeMode(mode);
 
-	  printf("%4d %c%c  ", c, (en == GPIO_PIN_SET ? 'E' : 'C'), (mode == GOAL ? 'G' : 'P'));
+	  //printf("%4d %c%c  ", c, (en == GPIO_PIN_SET ? 'E' : 'C'), (mode == GOAL ? 'G' : 'P'));
+	  printf("%4d %c  ", c, (mode == GOAL ? 'G' : 'P'));
 
 
 	  for (int n = 0; n < 5; n++) {
@@ -187,33 +201,35 @@ int main(void)
 		  if (jpeg.size > 1024)break;
 	  }
 
-	  //Image processing Enable
-	  if (en == GPIO_PIN_SET) {
-		  sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
-	  }
-	  
+	  sd_writeJpg(jpeg.data, jpeg.size, &jpeg_num);
+
 	  if (decode(&jpeg) == 0) {
 		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 	  }
 	  printf("%ldB %05ld.jpg  ", jpeg.size, jpeg_num);
 	  printf("xc=%3ld yc=%3ld s=%5ld ", jpeg.xc, jpeg.yc, jpeg.s);
 
-
+	  
 	  //Transmit Image Data
-	  if (HAL_GPIO_ReadPin(EN_GPIO_Port, EN_Pin) == GPIO_PIN_SET) {
-		  uint8_t tx_buff[10];
-		  tx_buff[0] = 'O';
-		  tx_buff[1] = (uint8_t)(jpeg_num >> 8);
-		  tx_buff[2] = (uint8_t)(jpeg_num );
-		  tx_buff[3] = (uint8_t)(jpeg.xc >> 8);
-		  tx_buff[4] = (uint8_t)(jpeg.xc);
-		  tx_buff[5] = (uint8_t)(jpeg.yc >> 8);
-		  tx_buff[6] = (uint8_t)(jpeg.yc);
-		  tx_buff[7] = (uint8_t)(jpeg.s >> 8);
-		  tx_buff[8] = (uint8_t)(jpeg.s);
-		  tx_buff[9] = 'o';
-		  HAL_UART_Transmit(&huart3, tx_buff, 10, 15);
-	  }
+	  HAL_GPIO_WritePin(MAIN_IT_GPIO_Port, MAIN_IT_Pin, GPIO_PIN_SET);
+	  HAL_Delay(1);
+	  uint8_t tx_buff[11];
+	  tx_buff[0] = '$';
+	  HAL_UART_Transmit(&huart3, tx_buff, 1, 15);
+	  tx_buff[0] = 'O';
+	  tx_buff[1] = (uint8_t)(jpeg_num >> 8);
+	  tx_buff[2] = (uint8_t)(jpeg_num);
+	  tx_buff[3] = (uint8_t)(jpeg.xc >> 8);
+	  tx_buff[4] = (uint8_t)(jpeg.xc);
+	  tx_buff[5] = (uint8_t)(jpeg.yc >> 8);
+	  tx_buff[6] = (uint8_t)(jpeg.yc);
+	  tx_buff[7] = (uint8_t)(jpeg.s >> 16);
+	  tx_buff[8] = (uint8_t)(jpeg.s >> 8);
+	  tx_buff[9] = (uint8_t)(jpeg.s);
+	  tx_buff[10] = 'o';
+	  HAL_UART_Transmit(&huart3, tx_buff, 11, 15);
+	  HAL_GPIO_WritePin(MAIN_IT_GPIO_Port, MAIN_IT_Pin, GPIO_PIN_RESET);
+
 
 	  //LOG DATA
 	  printf("c = %d", count_rxIT);
@@ -228,7 +244,13 @@ int main(void)
 		  before_index = before_index % MAIN_RX_BUFF_NUM;
 	  }
 	  if (count_rxIT == 0) {
-		  HAL_UART_Receive_IT(&huart3, &main_rx_buff[main_rx_buff_index * MAIN_RX_BUFF_SIZE], MAIN_RX_BUFF_SIZE);
+		  error_count++;
+		  if (error_count == 10) {
+			  reset_main_uart();
+		  }
+	  }
+	  else {
+		  error_count = 0;
 	  }
 	  count_rxIT = 0;
 
@@ -426,13 +448,20 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, MAIN_IT_Pin|LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : MODE_Pin EN_Pin */
-  GPIO_InitStruct.Pin = MODE_Pin|EN_Pin;
+  /*Configure GPIO pin : MODE_Pin */
+  GPIO_InitStruct.Pin = MODE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(MODE_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MAIN_IT_Pin */
+  GPIO_InitStruct.Pin = MAIN_IT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(MAIN_IT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;

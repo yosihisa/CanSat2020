@@ -34,7 +34,7 @@ int32_t ddmm2ddddd(int32_t ddmm, int32_t mmmm,uint8_t s) {
 
 void init_gnss() {
 	char str[100];
-	HAL_Delay(1000);
+	HAL_Delay(500);
 	sprintf(str, "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n");
 	HAL_UART_Transmit(&GNSS_PORT, (uint8_t*)str, strlen(str), 500);
 	HAL_Delay(80);
@@ -58,6 +58,7 @@ void init_gnss() {
 	HAL_Delay(80);
 	HAL_UART_Transmit(&GNSS_PORT, (uint8_t*)str, strlen(str), 500);
 	HAL_Delay(80);
+
 }
 
 void set_gnssGoal(const int32_t latitude, const int32_t longitude, const uint64_t dist) {
@@ -130,7 +131,7 @@ int get_gnss(struct gnss* data, const uint32_t TIMEOUT) {
 
 				data->latitude = ddmm2ddddd(latH, latL, latS);
 				data->longitude = ddmm2ddddd(lonH, lonL, lonS);
-				data->speed = (knotH * 10 + knotL) * 0.514444;
+				data->speed = (knotH * 10 + knotL) * 0.514444; //knot -> dm/s
 
 				int64_t dx = (goal.longitude - data->longitude);
 				int64_t dy = (goal.latitude - data->latitude);
