@@ -7,6 +7,7 @@
 
 
 #include "flash.h"
+#include <stdio.h>
 
 #define SPI_PORT hspi2
 extern SPI_HandleTypeDef SPI_PORT;

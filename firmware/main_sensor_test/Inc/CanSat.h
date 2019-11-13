@@ -1,4 +1,4 @@
-/*
+﻿/*
  * CanSat.h
  *
  *  Created on: Oct 29, 2019
@@ -31,6 +31,15 @@ typedef struct {
 	uint32_t s;
 }img_t;
 
+//目標値 - 100～+ 100 
+//操作量 -1000～+1000 (PWMの範囲)
+typedef struct {
+	int8_t L_ref;
+	int8_t R_ref;
+	short L;
+	short R;
+}motor_t;
+
 typedef struct {
 	unsigned long log_num;
 
@@ -51,21 +60,17 @@ typedef struct {
 
 	float arg;
 
-	short motor_L;
-	short motor_R;
-
-	short motor_L_ref;
-	short motor_R_ref;
-
 	unsigned char nichrome;
 
 	img_t img;
+	motor_t motor;
 
 }cansat_t;
 
 void init_I2C();
 void update_sensor(cansat_t *data);
-
-
+void motor(motor_t* motor, short voltage);
+void init_pwm(motor_t* motor);
+void set_motorSpeed(motor_t* motor,const int8_t L,const int8_t R);
 
 #endif /* CANSAT_H_ */

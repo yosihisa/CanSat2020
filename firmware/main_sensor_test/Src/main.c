@@ -48,6 +48,7 @@ I2C_HandleTypeDef hi2c1;
 
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
@@ -72,6 +73,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART4_UART_Init(void);
 static void MX_USART5_UART_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,6 +83,8 @@ static void MX_USART5_UART_Init(void);
 
 static img_t img_data = { 0 };
 static uint8_t sub_rx_buff[11] = { 0 };
+static cansat_t cansat_data;
+
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	for (int i = 0; i < 10; i++) {
@@ -104,6 +108,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		return;
 	}
 }
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
+	if (htim == &htim2) {
+		motor(&cansat_data.motor, cansat_data.voltage);
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -142,12 +153,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART4_UART_Init();
   MX_USART5_UART_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
-
-  cansat_t cansat_data;
-
 
   ///HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_RESET);  //SUB Disable
   HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_SET);//SUB Mode PINK
@@ -170,29 +179,15 @@ int main(void)
   printf("ADXL375 = %01X\n", adxl375_who_am_i());
   printf("JEDECID = %lX\n", flash_read_ID());
 
-  for (uint32_t address = 0x08080000; address < 0x080817FF; address += 4) {
-	  uint32_t data;
-	  eeprom_readWord(address, &data);
-	  printf("R %08lX=%08lX\n", address, data);
-  }
-  for (uint32_t address = 0x08080000; address < 0x080817FF; address += 4) {
-	  uint32_t data = 0;// 0xFFFFFFFF;// address + 0x11000000;
-	  eeprom_writeWord(address, data);
-	  printf("W %08lX=%08lX\n", address, data);
-  }
-  for (uint32_t address = 0x08080000; address < 0x080817FF; address += 4) {
-	  uint32_t data;
-	  eeprom_readWord(address, &data);
-	  printf("R %08lX=%08lX\n", address, data);
-  }
-
   init_I2C();
   init_gnss();
+  init_pwm(&cansat_data.motor);
 
   set_gnssGoal(33890166, 130839927, 200);
   cansat_data.log_num = 0;
 
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -202,6 +197,22 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if (cansat_data.log_num < 20) {
+		  set_motorSpeed(&cansat_data.motor, 100, 0);
+	  }
+	  else if (cansat_data.log_num < 40) {
+		  set_motorSpeed(&cansat_data.motor, -100, 0);
+	  }
+	  else if (cansat_data.log_num < 60) {
+		  set_motorSpeed(&cansat_data.motor, 0, 100);
+	  }
+	  else if (cansat_data.log_num < 80) {
+		  set_motorSpeed(&cansat_data.motor, 0, -100);
+	  }
+	  else if (cansat_data.log_num < 100) {
+		  set_motorSpeed(&cansat_data.motor, 80, 80);
+	  }
+
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_SET);
 	  update_sensor(&cansat_data);
 	  cansat_data.img = img_data;
@@ -217,16 +228,16 @@ int main(void)
 	  az = (float)cansat_data.accel.z * 49 / 1000;
 
 	  printf("%02d:%02d:%02d.%03d ", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
+	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
 	  printf("GNSS[%c(%ld,%ld)] ", (cansat_data.gnss.state == 1 ? 'A' : 'V'), cansat_data.gnss.latitude, cansat_data.gnss.longitude);
 	  printf("S%3d %lddm(%+3d) ", cansat_data.gnss.speed, cansat_data.gnss.dist, cansat_data.gnss.arg);
 	  printf("F%1d ", cansat_data.flightPin);
 	  printf("C[%+4d,%+4d,%+4d] %+3d ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
-	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
 	  printf("%5.2fC %8.3fdhPa ", temp, press);
 	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
 	  printf("%3dcm ", cansat_data.dist_ToF);
 	  printf("%05d.jpg xc=%3d yc=%3d s=%4ld ", cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s);
-
+	  printf("Ref(%+4d,%+4d) PWM(%+4d,%+4d) ", cansat_data.motor.L_ref, cansat_data.motor.R_ref, cansat_data.motor.L, cansat_data.motor.R);
 
 	  printf("\n");
 
@@ -386,6 +397,51 @@ static void MX_SPI2_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 320;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 1000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * @brief TIM3 Initialization Function
   * @param None
   * @retval None
@@ -406,7 +462,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 0;
+  htim3.Init.Period = 1000;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
@@ -664,7 +720,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 1, 0);
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
