@@ -25,5 +25,8 @@ int flash_erase_64k(uint8_t sector);
 
 uint32_t flash_read_ID();
 
+void eeprom_writeWord(uint32_t address, uint32_t value);
+void eeprom_readWord(uint32_t address, uint32_t* value);
+
 
 #endif /* FLASH_H_ */

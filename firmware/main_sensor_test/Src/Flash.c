@@ -142,7 +142,25 @@ uint32_t flash_read_ID() {
 
 	HAL_GPIO_WritePin(FLASH_CS_Port, FLASH_CS_Pin, GPIO_PIN_RESET);
 	HAL_SPI_Transmit(&SPI_PORT, &tx_buff, 1, 10);
-	HAL_SPI_Receive(&SPI_PORT, &rx_buff, 3, 10);
+	HAL_SPI_Receive(&SPI_PORT, rx_buff, 3, 10);
 	HAL_GPIO_WritePin(FLASH_CS_Port, FLASH_CS_Pin, GPIO_PIN_SET);
 	return (rx_buff[0] << 16) + (rx_buff[1] << 8) + rx_buff[2];
+}
+
+void eeprom_writeWord(uint32_t address, uint32_t value) {
+	if (!IS_FLASH_DATA_ADDRESS(address)) {
+		printf("Address out of range.");
+		return;
+	}
+	HAL_FLASHEx_DATAEEPROM_Unlock();
+	HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_WORD, address, value);
+	HAL_FLASHEx_DATAEEPROM_Lock();
+}
+
+void eeprom_readWord(uint32_t address, uint32_t* value) {
+	if (!IS_FLASH_DATA_ADDRESS(address)) {
+		printf("Address out of range.");
+		return;
+	}
+	*value = *(__I uint32_t*)address;
 }

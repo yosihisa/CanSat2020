@@ -170,41 +170,20 @@ int main(void)
   printf("ADXL375 = %01X\n", adxl375_who_am_i());
   printf("JEDECID = %lX\n", flash_read_ID());
 
-  
-  for (uint32_t a = 0; a <= 0xFFFF; a++) {
-	  uint8_t data[256];
-	  for (int i = 0; i < 256; i++) {
-		  data[i] = 16 * ((i + a) % 16) + (i + a) % 16;
-	  }
-	  flash_write_page(a, data);
-	  printf("Write 0x%04lX\n", a);
+  for (uint32_t address = 0x08080000; address < 0x080817FF; address += 4) {
+	  uint32_t data;
+	  eeprom_readWord(address, &data);
+	  printf("R %08lX=%08lX\n", address, data);
   }
-
-  for (uint32_t a = 0; a <= 0xFFFF; a++) {
-	  uint8_t data[256];
-	  flash_read_page(a, data);
-	  printf("0x%04lX ", a);
-	  for (int i = 0; i < 256; i++) {
-		  printf("%02X", data[i]);
-	  }
-	  printf("\n");
-
+  for (uint32_t address = 0x08080000; address < 0x080817FF; address += 4) {
+	  uint32_t data = 0;// 0xFFFFFFFF;// address + 0x11000000;
+	  eeprom_writeWord(address, data);
+	  printf("W %08lX=%08lX\n", address, data);
   }
-
-  for (uint32_t a = 0; a <= 0xFF; a++) {
-	  flash_erase_64k(a);
-	  printf("Erase 0x%02lX00\n", a);
-  }
-
-  for (uint32_t a = 0; a <= 0xFFFF; a++) {
-	  uint8_t data[256];
-	  flash_read_page(a, data);
-	  printf("0x%04lX ", a);
-	  for (int i = 0; i < 256; i++) {
-		  printf("%02X", data[i]);
-	  }
-	  printf("\n");
-
+  for (uint32_t address = 0x08080000; address < 0x080817FF; address += 4) {
+	  uint32_t data;
+	  eeprom_readWord(address, &data);
+	  printf("R %08lX=%08lX\n", address, data);
   }
 
   init_I2C();
