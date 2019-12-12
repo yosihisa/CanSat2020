@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "cansat.h"
+#include "CUI.h"
 #include <string.h>
 /* USER CODE END Includes */
 
@@ -59,7 +60,7 @@ UART_HandleTypeDef huart5;
 /* USER CODE BEGIN PV */
 void __io_putchar(uint8_t ch) {
 	HAL_UART_Transmit(&huart5, &ch, 1, 1);
-	//HAL_UART_Transmit(&huart1, &ch, 1, 1); //COM
+	HAL_UART_Transmit(&huart1, &ch, 1, 1); //COM
 }
 /* USER CODE END PV */
 
@@ -156,6 +157,8 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+
+  //---------------------------------------Initialization BEGIN------------------------------------------------
   HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
 
   ///HAL_GPIO_WritePin(SUB_EN_GPIO_Port, SUB_EN_Pin, GPIO_PIN_RESET);  //SUB Disable
@@ -183,11 +186,37 @@ int main(void)
   init_gnss();
   init_pwm(&cansat_data.motor);
 
-  set_gnssGoal(33890166, 130839927, 200);
+  //set_gnssGoal(33890166, 130839927, 200);
+
+  save_goal(0, 33890166, 130839927, 200);
+  save_goal(1, 1, 1, 1);
+  save_goal(2, 2, 2, 2);
+  save_goal(3, 3, 3, 3);
+  save_goal(4, 4, 4, 4);
+  save_goal(5, 5, 5, 5);
+  save_goal(6, 6, 6, 6);
+  save_goal(7, 7, 7, 7);
+  save_goal(8, 8, 8, 8);
+  save_goal(9, 9, 9, 9);
+  save_goal(10, 10, 10, 10);
+  save_goal(11, 11, 11, 11);
+  save_goal(12, 12, 12, 12);
+  save_goal(13, 13, 13, 13);
+  save_goal(14, 14, 14, 14);
+  save_goal(15, 15, 15, 15);
+
+ // delete_Log();
+
+  set_goalFromEEPROM(0);
+  update_sensor(&cansat_data);
+  cansat_data.flash_address = get_startAddress(cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
   cansat_data.log_num = 0;
 
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
   HAL_TIM_Base_Start_IT(&htim2);
+
+  //---------------------------------------Initialization END------------------------------------------------
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -197,7 +226,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if (cansat_data.log_num < 20) {
+	/*  if (cansat_data.log_num < 20) {
 		  set_motorSpeed(&cansat_data.motor, 100, 0);
 	  }
 	  else if (cansat_data.log_num < 40) {
@@ -209,55 +238,21 @@ int main(void)
 	  else if (cansat_data.log_num < 80) {
 		  set_motorSpeed(&cansat_data.motor, 0, -100);
 	  }
-	  else if (cansat_data.log_num < 100) {
-		  set_motorSpeed(&cansat_data.motor, 80, 80);
-	  }
+	  else
+	  if (cansat_data.log_num > 100) {
+		  set_motorSpeed(&cansat_data.motor, 100, 100);
+	  }*/
 
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_SET);
 	  update_sensor(&cansat_data);
 	  cansat_data.img = img_data;
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_RESET);
 
-	  float temp = (get_temp() / 480.0) + 42.5;
-
-	  float press = cansat_data.press / 4096.0;
-
-	  float ax, ay, az;
-	  ax = (float)cansat_data.accel.x * 49 / 1000;
-	  ay = (float)cansat_data.accel.y * 49 / 1000;
-	  az = (float)cansat_data.accel.z * 49 / 1000;
-
-	  printf("%02d:%02d:%02d.%03d ", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms);
-	  printf("%4dmV %2dmA ", cansat_data.voltage, cansat_data.current);
-	  printf("GNSS[%c(%ld,%ld)] ", (cansat_data.gnss.state == 1 ? 'A' : 'V'), cansat_data.gnss.latitude, cansat_data.gnss.longitude);
-	  printf("S%3d %lddm(%+3d) ", cansat_data.gnss.speed, cansat_data.gnss.dist, cansat_data.gnss.arg);
-	  printf("F%1d ", cansat_data.flightPin);
-	  printf("C[%+4d,%+4d,%+4d] %+3d ", cansat_data.compass.x, cansat_data.compass.y, cansat_data.compass.z, cansat_data.compass.arg);
-	  printf("%5.2fC %8.3fdhPa ", temp, press);
-	  printf("G[%+5.3f,%+5.3f,%+5.3f] ", ax,ay,az);
-	  printf("%3dcm ", cansat_data.dist_ToF);
-	  printf("%05d.jpg xc=%3d yc=%3d s=%4ld ", cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s);
-	  printf("Ref(%+4d,%+4d) PWM(%+4d,%+4d) ", cansat_data.motor.L_ref, cansat_data.motor.R_ref, cansat_data.motor.L, cansat_data.motor.R);
-
-	  printf("\n");
-
-	  char str[400];
-	  sprintf(str, "%02d,%02d,%02d.%03d,%4d,%3d, %d,%7ld,%7ld, %d,%ld,%d,%d,%d ,%5.2f,%8.3f, %+5.3f,%+5.3f,%+5.3f, %d,%d,%d,%ld\n",
-		  cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss, cansat_data.gnss.ms, cansat_data.voltage, cansat_data.current, 
-		  cansat_data.gnss.state , cansat_data.gnss.latitude, cansat_data.gnss.longitude,
-		  cansat_data.gnss.speed, cansat_data.gnss.dist, cansat_data.gnss.arg, cansat_data.flightPin, cansat_data.compass.arg,
-		  temp, press,
-		  ax, ay, az,
-		  cansat_data.img.name, cansat_data.img.xc, cansat_data.img.yc, cansat_data.img.s
-	  );
-	  HAL_UART_Transmit(&huart4, (uint8_t*)str, strlen(str), 10);
-	  HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), 10);
-
+	  write_log(&cansat_data);
 
 	  if (cansat_data.log_num == 50) {
 		  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET); //SUB Mode RED
 	  }
-	  cansat_data.log_num++;
   }
   /* USER CODE END 3 */
 }

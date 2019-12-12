@@ -15,6 +15,7 @@
 #include "Flash.h"
 #include "GNSS.h"
 #include "I2C_Sensor.h"
+#include "CUI.h"
 
 /*
 int8	char
@@ -41,36 +42,35 @@ typedef struct {
 }motor_t;
 
 typedef struct {
-	unsigned long log_num;
+	
+	unsigned long	flash_address;
 
-	short mode;
-	char flightPin;
-
-	short voltage;
-	short current;
-
-	struct gnss gnss;
-
-	struct xyza compass;
-	struct xyz accel;
-	unsigned long press;
-	short press_d;
-
-	unsigned short dist_ToF;
-
-	float arg;
-
-	unsigned char nichrome;
-
-	img_t img;
+	unsigned long	log_num;
+	short			mode;
+	char			flightPin;
+	unsigned char	nichrome;
+	short			arg;
 	motor_t motor;
+	short			voltage;
+	short			current;
+	struct			gnss gnss;
+	unsigned long	press;
+	short			press_d;
+	struct			xyza compass;
+	struct			xyz accel;
+	img_t			img;
 
 }cansat_t;
 
-void init_I2C();
-void update_sensor(cansat_t *data);
+
 void motor(motor_t* motor, short voltage);
+void set_motorSpeed(motor_t* motor, const int8_t L, const int8_t R);
+
+void init_I2C();
 void init_pwm(motor_t* motor);
-void set_motorSpeed(motor_t* motor,const int8_t L,const int8_t R);
+
+void update_sensor(cansat_t* data);
+
+void write_log(cansat_t* data);
 
 #endif /* CANSAT_H_ */

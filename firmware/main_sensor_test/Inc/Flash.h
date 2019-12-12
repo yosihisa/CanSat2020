@@ -11,6 +11,8 @@
 #include "stm32l0xx_hal.h"
 #include "main.h"
 
+#include "GNSS.h"
+
 #define BLOCK_MAX 0xFF
 
 //void write_enable(FLASH_SELECTOR flash_selector);
@@ -28,5 +30,11 @@ uint32_t flash_read_ID();
 void eeprom_writeWord(uint32_t address, uint32_t value);
 void eeprom_readWord(uint32_t address, uint32_t* value);
 
+
+struct gnss_goal read_goal(int num);//EEPROMからゴール座標を読み出し
+void save_goal(int num, const int32_t latitude, const int32_t longitude, const uint64_t dist); //EEPROMにゴール座標を書き込み
+
+unsigned long get_startAddress(const uint8_t hh, const uint8_t mm, const uint8_t ss);//EEPROMから書き込み開始アドレスの読み出し
+void delete_Log();//ログ消去
 
 #endif /* FLASH_H_ */

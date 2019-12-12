@@ -165,3 +165,70 @@ void eeprom_readWord(uint32_t address, uint32_t* value) {
 	}
 	*value = *(__I uint32_t*)address;
 }
+
+struct gnss_goal read_goal(int num) {
+	struct gnss_goal data = { 0 };
+	if (num < 0 || num>15) {
+		printf("read_goal() error.");
+		return data;
+	}
+	eeprom_readWord(DATA_EEPROM_BASE + (num * 12) + 0, (uint32_t*)&data.latitude);
+	eeprom_readWord(DATA_EEPROM_BASE + (num * 12) + 4, (uint32_t*)&data.longitude);
+	eeprom_readWord(DATA_EEPROM_BASE + (num * 12) + 8, (uint32_t*)&data.dist);
+	return data;
+}
+
+void save_goal(int num, const int32_t latitude, const int32_t longitude, const uint64_t dist) {
+	if (num < 0 || num>15) {
+		printf("read_goal() error.");
+		return;
+	}
+	eeprom_writeWord(DATA_EEPROM_BASE + (num * 12) + 0, latitude);
+	eeprom_writeWord(DATA_EEPROM_BASE + (num * 12) + 4, longitude);
+	eeprom_writeWord(DATA_EEPROM_BASE + (num * 12) + 8, dist);
+}
+
+int is_empty256(uint8_t data[]) {
+	for (int i = 0; i < 256; i++) {
+		if (data[i] != 0xFF) {
+			return 0; //使用済み
+		}
+	}
+	return 1; //空
+}
+
+unsigned long get_startAddress(const uint8_t hh, const uint8_t mm, const uint8_t ss) {
+	unsigned long time, flash_address=0;
+	unsigned long eeprom_address;
+	uint8_t data[256];
+	for (eeprom_address = DATA_EEPROM_BASE + 0xC0; eeprom_address < DATA_EEPROM_BASE+0x17FF; eeprom_address+=8) {
+		eeprom_readWord(eeprom_address, &time);
+		if (time != 0xFFFFFFFF) {
+			eeprom_readWord(eeprom_address+4, &flash_address);
+			break;
+		}
+	}
+	while (flash_address < 0xFFFF) {
+		flash_read_page(flash_address, data);
+		if (is_empty256(data))break;
+		flash_address++;
+	}
+	time = 0;
+	time = (hh << 16) + (mm << 8) + ss;
+	eeprom_writeWord(eeprom_address + 8, time);
+	eeprom_writeWord(eeprom_address + 16, flash_address);
+	return flash_address;
+}
+
+void delete_Log() {
+	printf("Start clear_Log \t\n");
+	for (int i = 0; i <= 0xFF; i++) {
+		flash_erase_64k(i);
+		printf("Delete flash Sector %02X\t\n", i);
+	}
+	printf("Delete EEPROM \t\n");
+	for (int i = DATA_EEPROM_BASE + 0xC0; i <= DATA_EEPROM_BASE + 0x17FF; i+=4) {
+		eeprom_writeWord(i, 0xFFFFFF);
+	}
+	printf("Done clear_Log \t\n");
+}

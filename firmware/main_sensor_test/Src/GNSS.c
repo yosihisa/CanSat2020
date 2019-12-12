@@ -61,13 +61,12 @@ void init_gnss() {
 
 }
 
-void set_gnssGoal(const int32_t latitude, const int32_t longitude, const uint64_t dist) {
-	goal.latitude = latitude;
-	goal.longitude = longitude;
-	goal.dist = dist;
-	sr = cosf((float)latitude / 1000000)*1000;
+void set_gnssGoal(const struct gnss_goal *data) {
+	goal.latitude = data->latitude;
+	goal.longitude = data->longitude;
+	goal.dist = data->dist;
+	sr = cosf((float)data->latitude / 1000000)*1000;
 	if (sr < 0)sr *= -1;
-
 }
 
 void get_gnssGoal(int32_t* latitude, int32_t* longitude, uint64_t* dist) {

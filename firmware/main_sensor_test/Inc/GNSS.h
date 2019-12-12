@@ -35,7 +35,7 @@ struct gnss_goal {
 
 
 void init_gnss();
-void set_gnssGoal(const int32_t latitude, const int32_t longitude, const uint64_t dist);
+void set_gnssGoal(const struct gnss_goal *data);
 void get_gnssGoal(int32_t *latitude, int32_t *longitude, uint64_t *dist);
 int get_gnss(struct gnss* data, const uint32_t TIMEOUT);
 
