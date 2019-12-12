@@ -9,25 +9,44 @@ typedef struct {
 } IODEV;
 
 
-//色相の範囲
-#define H_MIN_1 0	//固定
-#define H_MAX_1 10
 
-#define H_MIN_2 330	
-#define H_MAX_2 360 //固定
+//------ゴール-----
+//色相の範囲
+#define G_H_MIN_1 0
+#define G_H_MAX_1 10
+
+#define G_H_MIN_2 330
+#define G_H_MAX_2 360
 
 //彩度の範囲
-#define S_MIN 45  * 2.56
-#define S_MAX 100 * 2.56
+#define G_S_MIN 115
+#define G_S_MAX 256
 
 //明度の範囲
-#define V_MIN 30  * 2.56
-#define V_MAX 100 * 2.56
+#define G_V_MIN 77
+#define G_V_MAX 256
 
-#define FILENAME "IMG\\%03d.jpg"
+//------パラシュート-----
+//色相の範囲
+#define P_H_MIN_1 300	
+#define P_H_MAX_1 300
+
+#define P_H_MIN_2 280
+#define P_H_MAX_2 310
+
+//彩度の範囲
+#define P_S_MIN 50
+#define P_S_MAX 180
+
+//明度の範囲
+#define P_V_MIN 50
+#define P_V_MAX 200
+
+#define FILENAME "IMG\\%05d.jpg"
 #define HEIGHT 480
 #define WIDTH  640
-BYTE RED_bool[HEIGHT][WIDTH / 8];
+BYTE RED_bool_G[HEIGHT][WIDTH / 8];
+BYTE RED_bool_P[HEIGHT][WIDTH / 8];
 
 
 
@@ -78,10 +97,18 @@ UINT out_func(JDEC* jd, void* bitmap, JRECT* rect)
 
 			if (h > 360.0)h -= 360;
 
-			if ((h >= H_MIN_1 && h <= H_MAX_1) || (h >= H_MIN_2 && h <= H_MAX_2)) {
-				if ((s >= S_MIN && s <= S_MAX) && (v >= V_MIN && v <= V_MAX)) {
+			if ((h >= G_H_MIN_1 && h <= G_H_MAX_1) || (h >= G_H_MIN_2 && h <= G_H_MAX_2)) {
+				if ((s >= G_S_MIN && s <= G_S_MAX) && (v >= G_V_MIN && v <= G_V_MAX)) {
 					bitshift = (rect->left + width) % 8;
-					RED_bool[rect->top + height][(rect->left + width) / 8] |= (0b10000000 >> bitshift);
+					RED_bool_G[rect->top + height][(rect->left + width) / 8] |= (0b10000000 >> bitshift);
+
+				}
+			
+			}
+			if ((h >= P_H_MIN_1 && h <= P_H_MAX_1) || (h >= P_H_MIN_2 && h <= P_H_MAX_2)) {
+				if ((s >= P_S_MIN && s <= P_S_MAX) && (v >= P_V_MIN && v <= P_V_MAX)) {
+					bitshift = (rect->left + width) % 8;
+					RED_bool_P[rect->top + height][(rect->left + width) / 8] |= (0b10000000 >> bitshift);
 
 				}
 			}
@@ -95,7 +122,7 @@ UINT out_func(JDEC* jd, void* bitmap, JRECT* rect)
 // プログラムは WinMain から始まります
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 	ChangeWindowMode(TRUE);
-	SetGraphMode(400, 480, 32);
+	SetGraphMode(640*2, 480*2, 32);
 
 
 	if (DxLib_Init() == -1)		// ＤＸライブラリ初期化処理
@@ -111,6 +138,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	BYTE work[3100];
 	int filenum = 0;
 
+	unsigned int Color = GetColor(255, 255, 255);
+
 	char str[256],path[256];
 	int flag = 0;
 	while (ScreenFlip() == 0 && ProcessMessage() == 0) {
@@ -121,20 +150,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 			//デコード準備
 			res = jd_prepare(&jdec, in_func, work, 3100, &devid);
-			memset(RED_bool, 0, sizeof(RED_bool));
+			memset(RED_bool_G, 0, sizeof(RED_bool_G));
+			memset(RED_bool_P, 0, sizeof(RED_bool_P));
+
 
 			if (res == JDR_OK) {
 				//デコード開始
 				res = jd_decomp(&jdec, out_func, 0);
 				if (res == JDR_OK) {
 
-					UINT xc = 0, yc = 0, s = 0;
+					UINT xc_G = 0, yc_G = 0, s_G = 0;
+					UINT xc_P = 0, yc_P = 0, s_P = 0;
 
 					//変換後の画像描画
 					for (UINT h = 0; h < jdec.height; h++) {
 						for (UINT w = 0; w < jdec.width; w++) {
-							if ((RED_bool[h][w / 8] & (0b10000000 >> (w % 8))) != 0) {
-								DrawPixel(w, h, GetColor(255, 0, 0));	// 点を打つ
+							if ((RED_bool_G[h][w / 8] & (0b10000000 >> (w % 8))) != 0) {
+								DrawPixel(w+641, h, GetColor(255, 0, 0));	// 点を打つ
+							}
+						}
+					}
+
+					for (UINT h = 0; h < jdec.height; h++) {
+						for (UINT w = 0; w < jdec.width; w++) {
+							if ((RED_bool_P[h][w / 8] & (0b10000000 >> (w % 8))) != 0) {
+								DrawPixel(w + 641, h+481, GetColor(255, 0, 255));	// 点を打つ
 							}
 						}
 					}
@@ -142,27 +182,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					//重心計算
 					for (UINT h = 0; h < jdec.height; h++) {
 						for (UINT w = 0; w < jdec.width; w++) {
-							if ((RED_bool[h][w / 8] & (0b10000000 >> (w % 8))) != 0) {
-								xc += w;
-								yc += h;
-								s++;
+							if ((RED_bool_G[h][w / 8] & (0b10000000 >> (w % 8))) != 0) {
+								xc_G += w;
+								yc_G += h;
+								s_G++;
 							}
 						}
 					}
-					if (s != 0) {
-						xc = xc / s;
-						yc = yc / s;
-						sprintf_s(str, "%03d.jpg (x,y) = (%d,%d) ,s = %d\n", filenum, xc, yc, s);
-						SetMainWindowText(str);
-
-						DrawCircle(xc, yc, 3, GetColor(0, 255, 255), FALSE);
-
-					} else {
-						//printfDx("(x,y) = Null ");
-						sprintf_s(str, "%03d.jpg (x,y) = Null", filenum);
-						SetMainWindowText(str);
-
+					if (s_G != 0) {
+						xc_G = xc_G / s_G;
+						yc_G = yc_G / s_G;
 					}
+					for (UINT h = 0; h < jdec.height; h++) {
+						for (UINT w = 0; w < jdec.width; w++) {
+							if ((RED_bool_P[h][w / 8] & (0b10000000 >> (w % 8))) != 0) {
+								xc_P += w;
+								yc_P += h;
+								s_P++;
+							}
+						}
+					}
+					if (s_P != 0) {
+						xc_P = xc_P / s_P;
+						yc_P = yc_P / s_P;
+					}
+					//計算結果の表示
+					DrawFormatString(10, 500, Color,"%s", path);
+					DrawFormatString(10, 530, Color, "G(x,y) = (%3d,%3d) ,s = %5d\n", xc_G, yc_G, s_G);
+					DrawFormatString(10, 550, Color, "P(x,y) = (%3d,%3d) ,s = %5d\n", xc_P, yc_P, s_P);
+
+					DrawCircle(xc_G+641, yc_G, 3, GetColor(0, 255, 255), FALSE);
+					DrawCircle(xc_P+641, yc_P+481, 3, GetColor(0, 255, 255), FALSE);
+
 				} else {
 					printfDx("Failed to decompress: rc=%d\n", res);
 				}
@@ -173,7 +224,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			}
 			fclose(devid.fp);
 
-			LoadGraphScreen(0, 241, path, FALSE);
+			LoadGraphScreen(0, 0, path, FALSE);
+			DrawLine(0, 480, 640 * 2, 480, GetColor(255, 255, 255));
+			DrawLine(640, 0, 640, 480*2, GetColor(255, 255, 255));
 			flag = 1;
 		}
 		if (GetWindowUserCloseFlag(TRUE)) {
