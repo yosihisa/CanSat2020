@@ -15,5 +15,6 @@ void CUI_main();
 
 void set_goalFromEEPROM(int num);
 
-
+void print_goalList();
+void print_logList();
 #endif /* CUI_H_ */

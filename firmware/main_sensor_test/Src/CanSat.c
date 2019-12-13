@@ -121,7 +121,7 @@ void print_log(cansat_t* data) {
 	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 10); //COM
 
 	//SUB
-	sprintf(str, "%5ld,%d,%d,%d,%d, %d,%d,%d,%d, %4d,%3d, %02d,%02d,%02d.%03d, %d,%8ld,%8ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d\n",
+	sprintf(str, "%5ld,%d,%d,%d,%d, %d,%d,%d,%d, %4d,%3d, %02d,%02d,%02d.%03d, %d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d\n",
 		data->log_num,		data->mode,			data->flightPin,		data->nichrome,		data->arg,
 		data->motor.L_ref,	data->motor.R_ref,	data->motor.L,			data->motor.R,
 		data->voltage,		data->current,
@@ -135,14 +135,14 @@ void print_log(cansat_t* data) {
 	HAL_UART_Transmit(&SUB_PORT, (uint8_t*)str, strlen(str), 10); //SUB
 
 	//PC
-	sprintf(str, "%5ld M%d F%d N%d A%+4d r(%+4d,%+4d) m(%+4d,%+4d) %4dmV %3dmA %02d:%02d:%02d.%03d,\t",
-		data->log_num,		data->mode,			data->flightPin,		data->nichrome,		data->arg,
+	sprintf(str, "%5ld(0x%04lX) M%d F%d N%d A%+4d r(%+4d,%+4d) m(%+4d,%+4d) %4dmV %3dmA %02d:%02d:%02d.%03d ",
+		data->log_num,		data->flash_address,data->mode,				data->flightPin,	data->nichrome,		data->arg,
 		data->motor.L_ref,	data->motor.R_ref,	data->motor.L,			data->motor.R,
 		data->voltage,		data->current,
 		data->gnss.hh,		data->gnss.mm,		data->gnss.ss,			data->gnss.ms
 	);
 	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 10); //PC
-	sprintf(str, "G[%c(%8ld,%8ld) S%3d D%8ld(%+4d)] Ca%+4d P[%ld,%d] I[%d.jpg,(%3d,%3d)s%ld] A[%+3d,%+3d,%+3d]\n",
+	sprintf(str, "G[%c(%10ld,%10ld) S%3d D%8ld(%+4d)] Ca%+4d P[%ld,%d] I[%d.jpg,(%3d,%3d)s%ld] A[%+3d,%+3d,%+3d]\n",
 		(data->gnss.state == 1 ? 'A' : 'V'),	data->gnss.latitude,	data->gnss.longitude,
 		data->gnss.speed,	data->gnss.dist,	data->gnss.arg,
 		data->compass.arg,	data->press,		data->press_d,
@@ -153,7 +153,7 @@ void print_log(cansat_t* data) {
 
 
 	//COM 後半
-	sprintf(str, "%d,%8ld,%8ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d\t\n",
+	sprintf(str, "%d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d\t\n",
 		data->gnss.state,	data->gnss.latitude,data->gnss.longitude,
 		data->gnss.speed,	data->gnss.dist,	data->gnss.arg,
 		data->compass.arg,	data->press,		data->press_d,
@@ -165,12 +165,38 @@ void print_log(cansat_t* data) {
 }
 
 void write_log(cansat_t* data) {
-	uint8_t buff[256];
-	memset(buff, 0xFF, 256);
-
+	uint32_t buff[64];
+	memset(buff, 0xFF, sizeof(buff));
+	uint8_t unit = (data->log_num % 3) * 20;
 	print_log(data);
+	buff[unit +  0] = (data->log_num);
+	buff[unit +  1] = (data->mode		<< 16) + (data->flightPin	<< 8) + (data->nichrome);
+	buff[unit +  2] = (data->arg		<< 16) + (data->motor.L_ref << 8) + (data->motor.R_ref);
+	buff[unit +  3] = (data->motor.L	<< 16) + (data->motor.R);
+	buff[unit +  4] = (data->voltage	<< 16) + (data->current);
+	buff[unit +  5] = (data->gnss.latitude);
+	buff[unit +  6] = (data->gnss.longitude);
+	buff[unit +  7] = (data->gnss.hh	<< 24) + (data->gnss.mm		<< 16) + (data->gnss.ss << 8) + (data->gnss.state);
+	buff[unit +  8] = (data->gnss.ms	<< 16) + (data->gnss.speed);
+	buff[unit +  9] = (data->gnss.dist);
+	buff[unit + 10] = (data->gnss.arg	<< 16) + (data->press_d);
+	buff[unit + 11] = (data->press);
+	buff[unit + 12] = (data->compass.x	<< 16) + (data->compass.y);
+	buff[unit + 13] = (data->compass.z	<< 16) + (data->compass.arg);
+	buff[unit + 14] = (data->accel.x	<< 16) + (data->accel.y);
+	buff[unit + 15] = (data->accel.z	<< 16) + (data->img.name);
+	buff[unit + 16] = (data->img.xc		<< 16) + (data->img.yc);
+	buff[unit + 17] = (data->img.s);
+	buff[unit + 18] = 0;
+	buff[unit + 19] = 0;
+
+	buff[63] = 0;
+
+	flash_write_page(data->flash_address, (uint8_t*)&buff[0]);
+	
+	if (data->log_num % 3 == 2) {
+		data->flash_address++;
+	}
 
 	data->log_num++;
-
-	//data[];
 }

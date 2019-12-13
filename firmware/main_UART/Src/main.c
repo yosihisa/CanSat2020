@@ -43,7 +43,7 @@
 
 
 
-#define MODE COM //COM or GNSS
+#define MODE GNSS //COM or GNSS
 
 
 

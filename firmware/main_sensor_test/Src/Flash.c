@@ -150,7 +150,7 @@ uint32_t flash_read_ID() {
 
 void eeprom_writeWord(uint32_t address, uint32_t value) {
 	if (!IS_FLASH_DATA_ADDRESS(address)) {
-		printf("Address out of range.");
+		printf("eeprom_writeWord() error.");
 		return;
 	}
 	HAL_FLASHEx_DATAEEPROM_Unlock();
@@ -160,7 +160,7 @@ void eeprom_writeWord(uint32_t address, uint32_t value) {
 
 void eeprom_readWord(uint32_t address, uint32_t* value) {
 	if (!IS_FLASH_DATA_ADDRESS(address)) {
-		printf("Address out of range.");
+		printf("eeprom_readWord() error.");
 		return;
 	}
 	*value = *(__I uint32_t*)address;
@@ -188,47 +188,51 @@ void save_goal(int num, const int32_t latitude, const int32_t longitude, const u
 	eeprom_writeWord(DATA_EEPROM_BASE + (num * 12) + 8, dist);
 }
 
-int is_empty256(uint8_t data[]) {
-	for (int i = 0; i < 256; i++) {
-		if (data[i] != 0xFF) {
-			return 0; //使用済み
-		}
-	}
-	return 1; //空
-}
-
 unsigned long get_startAddress(const uint8_t hh, const uint8_t mm, const uint8_t ss) {
 	unsigned long time, flash_address=0;
 	unsigned long eeprom_address;
 	uint8_t data[256];
-	for (eeprom_address = DATA_EEPROM_BASE + 0xC0; eeprom_address < DATA_EEPROM_BASE+0x17FF; eeprom_address+=8) {
+
+	for (eeprom_address = 0x08080000 + 0xC0; eeprom_address < 0x08080000 + 0x17F0 ; eeprom_address+=8) {
 		eeprom_readWord(eeprom_address, &time);
-		if (time != 0xFFFFFFFF) {
-			eeprom_readWord(eeprom_address+4, &flash_address);
+		
+		if (time == 0xFFFFFFFF) {
+		
+			if (eeprom_address == 0x080800C0) {
+				flash_address = 0;
+			}
+			else {
+				eeprom_readWord(eeprom_address - 4, &flash_address);
+			}
+
 			break;
 		}
+
 	}
+
+
 	while (flash_address < 0xFFFF) {
 		flash_read_page(flash_address, data);
-		if (is_empty256(data))break;
+		if (data[255] ==0xFF )break;
 		flash_address++;
 	}
-	time = 0;
+
 	time = (hh << 16) + (mm << 8) + ss;
-	eeprom_writeWord(eeprom_address + 8, time);
-	eeprom_writeWord(eeprom_address + 16, flash_address);
+	eeprom_writeWord(eeprom_address + 0, time);
+	eeprom_writeWord(eeprom_address + 4, flash_address);
+
 	return flash_address;
 }
 
 void delete_Log() {
-	printf("Start clear_Log \t\n");
+	/*printf("Start clear_Log \t\n");
 	for (int i = 0; i <= 0xFF; i++) {
 		flash_erase_64k(i);
 		printf("Delete flash Sector %02X\t\n", i);
-	}
+	}*/
 	printf("Delete EEPROM \t\n");
-	for (int i = DATA_EEPROM_BASE + 0xC0; i <= DATA_EEPROM_BASE + 0x17FF; i+=4) {
-		eeprom_writeWord(i, 0xFFFFFF);
+	for (unsigned long i = 0x08080000 + 0xC0; i < 0x08080000 + 0x17FF; i+=4) {
+		eeprom_writeWord(i, 0xFFFFFFFF);
 	}
 	printf("Done clear_Log \t\n");
 }

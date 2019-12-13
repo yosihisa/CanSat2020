@@ -186,29 +186,20 @@ int main(void)
   init_gnss();
   init_pwm(&cansat_data.motor);
 
-  //set_gnssGoal(33890166, 130839927, 200);
+  //save_goal(0, 33890166, 130839927, 200);
 
-  save_goal(0, 33890166, 130839927, 200);
-  save_goal(1, 1, 1, 1);
-  save_goal(2, 2, 2, 2);
-  save_goal(3, 3, 3, 3);
-  save_goal(4, 4, 4, 4);
-  save_goal(5, 5, 5, 5);
-  save_goal(6, 6, 6, 6);
-  save_goal(7, 7, 7, 7);
-  save_goal(8, 8, 8, 8);
-  save_goal(9, 9, 9, 9);
-  save_goal(10, 10, 10, 10);
-  save_goal(11, 11, 11, 11);
-  save_goal(12, 12, 12, 12);
-  save_goal(13, 13, 13, 13);
-  save_goal(14, 14, 14, 14);
-  save_goal(15, 15, 15, 15);
+  save_goal(10, 0xFFF, 0xFFF, 0xFFF);
+  save_goal(11, -20, -20, -20);
+  save_goal(12, 0xFFF, 0xFFF, 0xFFF);
+  save_goal(13, 0xFFF, 0xFFF, 0xFFF);
+  save_goal(14, 0xFFF, 0xFFF, 0xFFF);
+  save_goal(15, 0xFFF, 0xFFF, 0xFFF);
 
- // delete_Log();
+  //delete_Log();
 
   set_goalFromEEPROM(0);
   update_sensor(&cansat_data);
+  printf("TIME %02d:%02d:%02d\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
   cansat_data.flash_address = get_startAddress(cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
   cansat_data.log_num = 0;
 
@@ -216,6 +207,10 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
 
   //---------------------------------------Initialization END------------------------------------------------
+
+  printf("Flash address %lX\n", cansat_data.flash_address);
+  print_goalList();
+  print_logList();
 
   /* USER CODE END 2 */
 
