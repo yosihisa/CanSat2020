@@ -112,7 +112,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
 	if (htim == &htim2) {
-		motor(&cansat_data.motor, cansat_data.voltage);
+		_motor(&cansat_data.motor, cansat_data.voltage);
 	}
 }
 
@@ -186,31 +186,17 @@ int main(void)
   init_gnss();
   init_pwm(&cansat_data.motor);
 
-  //save_goal(0, 33890166, 130839927, 200);
-
-  save_goal(10, 0xFFF, 0xFFF, 0xFFF);
-  save_goal(11, -20, -20, -20);
-  save_goal(12, 0xFFF, 0xFFF, 0xFFF);
-  save_goal(13, 0xFFF, 0xFFF, 0xFFF);
-  save_goal(14, 0xFFF, 0xFFF, 0xFFF);
-  save_goal(15, 0xFFF, 0xFFF, 0xFFF);
-
-  //delete_Log();
-
+  
   set_goalFromEEPROM(0);
   update_sensor(&cansat_data);
   printf("TIME %02d:%02d:%02d\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
   cansat_data.flash_address = get_startAddress(cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
   cansat_data.log_num = 0;
+  printf("Flash address 0x%lX\n", cansat_data.flash_address);
 
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
   HAL_TIM_Base_Start_IT(&htim2);
-
   //---------------------------------------Initialization END------------------------------------------------
-
-  printf("Flash address %lX\n", cansat_data.flash_address);
-  print_goalList();
-  print_logList();
 
   /* USER CODE END 2 */
 
@@ -222,28 +208,42 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	/*  if (cansat_data.log_num < 20) {
-		  set_motorSpeed(&cansat_data.motor, 100, 0);
+		  motor_Speed(&cansat_data.motor, 100, 0);
 	  }
 	  else if (cansat_data.log_num < 40) {
-		  set_motorSpeed(&cansat_data.motor, -100, 0);
+		  motor_Speed(&cansat_data.motor, -100, 0);
 	  }
 	  else if (cansat_data.log_num < 60) {
-		  set_motorSpeed(&cansat_data.motor, 0, 100);
+		  motor_Speed(&cansat_data.motor, 0, 100);
 	  }
 	  else if (cansat_data.log_num < 80) {
-		  set_motorSpeed(&cansat_data.motor, 0, -100);
+		  motor_Speed(&cansat_data.motor, 0, -100);
 	  }
 	  else
 	  if (cansat_data.log_num > 100) {
-		  set_motorSpeed(&cansat_data.motor, 100, 100);
+		  motor_Speed(&cansat_data.motor, 100, 100);
 	  }*/
+
+	  //Enter CUI Mode
+	  if (get_char(20) == 'q') {
+		  HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
+		  HAL_TIM_Base_Stop_IT(&htim2);
+		  motorStop();
+
+		  CUI_main();
+
+		  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+		  HAL_TIM_Base_Start_IT(&htim2);
+	  };
+
 
 	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_SET);
 	  update_sensor(&cansat_data);
 	  cansat_data.img = img_data;
-	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_RESET);
 
 	  write_log(&cansat_data);
+
+	  HAL_GPIO_WritePin(LED_L0_GPIO_Port, LED_L0_Pin, GPIO_PIN_RESET);
 
 	  if (cansat_data.log_num == 50) {
 		  HAL_GPIO_WritePin(SUB_MODE_GPIO_Port, SUB_MODE_Pin, GPIO_PIN_RESET); //SUB Mode RED
@@ -520,7 +520,9 @@ static void MX_USART1_UART_Init(void)
   huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart1.Init.OverSampling = UART_OVERSAMPLING_16;
   huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT|UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart1.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
+  huart1.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
@@ -631,7 +633,9 @@ static void MX_USART5_UART_Init(void)
   huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart5.Init.OverSampling = UART_OVERSAMPLING_16;
   huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT|UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart5.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
+  huart5.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart5) != HAL_OK)
   {
     Error_Handler();

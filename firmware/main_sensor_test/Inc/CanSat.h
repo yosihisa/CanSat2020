@@ -63,8 +63,9 @@ typedef struct {
 }cansat_t;
 
 
-void motor(motor_t* motor, short voltage);
-void set_motorSpeed(motor_t* motor, const int8_t L, const int8_t R);
+void _motor(motor_t* motor, short voltage);
+void motor_Speed(motor_t* motor, const int8_t L, const int8_t R);
+void motorStop();
 
 void init_I2C();
 void init_pwm(motor_t* motor);

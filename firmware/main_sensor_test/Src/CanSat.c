@@ -65,7 +65,7 @@ short calc_pwmPower(short cv, int8_t reference, short voltage) {
 	return (short)pwm;
 }
 
-void motor(motor_t* motor, short voltage) {
+void _motor(motor_t* motor, short voltage) {
 	motor->L = calc_pwmPower(motor->L, motor->L_ref, voltage);
 	motor->R = calc_pwmPower(motor->R, motor->R_ref, voltage);
 
@@ -88,9 +88,16 @@ void motor(motor_t* motor, short voltage) {
 	}
 }
 
-void set_motorSpeed(motor_t* motor, const int8_t L, const int8_t R) {
+void motor_Speed(motor_t* motor, const int8_t L, const int8_t R) {
 	motor->L_ref = L;
 	motor->R_ref = R;
+}
+
+void motorStop() {
+	__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_2, 0);
+	__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_3, 0);
+	__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_4, 0);
 }
 
 void init_pwm(motor_t* motor) {

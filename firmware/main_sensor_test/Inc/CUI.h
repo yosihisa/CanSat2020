@@ -8,13 +8,12 @@
 #ifndef CUI_H_
 #define CUI_H_
 
-#include "main.h"
-#include "Flash.h"
-
 void CUI_main();
 
 void set_goalFromEEPROM(int num);
 
 void print_goalList();
 void print_logList();
+
+char get_char(int timeout);
 #endif /* CUI_H_ */

@@ -180,7 +180,7 @@ struct gnss_goal read_goal(int num) {
 
 void save_goal(int num, const int32_t latitude, const int32_t longitude, const uint64_t dist) {
 	if (num < 0 || num>15) {
-		printf("read_goal() error.");
+		printf("save_goal() error.");
 		return;
 	}
 	eeprom_writeWord(DATA_EEPROM_BASE + (num * 12) + 0, latitude);
@@ -225,14 +225,17 @@ unsigned long get_startAddress(const uint8_t hh, const uint8_t mm, const uint8_t
 }
 
 void delete_Log() {
-	/*printf("Start clear_Log \t\n");
+	printf("Start clear_Log \t\n");
 	for (int i = 0; i <= 0xFF; i++) {
 		flash_erase_64k(i);
-		printf("Delete flash Sector %02X\t\n", i);
-	}*/
+		printf("Delete flash Sector 0x%02X\t\n", i);
+	}
 	printf("Delete EEPROM \t\n");
 	for (unsigned long i = 0x08080000 + 0xC0; i < 0x08080000 + 0x17FF; i+=4) {
 		eeprom_writeWord(i, 0xFFFFFFFF);
+		if (i % 0x20 == 0) {
+			printf("Delete EEPROM 0x%08lx\t\n", i);
+		}
 	}
 	printf("Done clear_Log \t\n");
 }

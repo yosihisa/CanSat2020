@@ -69,7 +69,7 @@ void set_gnssGoal(const struct gnss_goal *data) {
 	if (sr < 0)sr *= -1;
 }
 
-void get_gnssGoal(int32_t* latitude, int32_t* longitude, uint64_t* dist) {
+void get_gnssGoal(int32_t* latitude, int32_t* longitude, uint32_t* dist) {
 	*latitude = goal.latitude;
 	*longitude = goal.longitude;
 	*dist = goal.dist;
