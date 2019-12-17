@@ -299,6 +299,12 @@ void CUI_Delete() {
 	if (get_num(60) == 1) {
 		delete_Log();
 	}
+	
+	//削除後に途中から書き込まれないよう電源を切る
+	while (1) {
+		printf("Please turn off the power\n\t");
+		HAL_Delay(1000);
+	}
 }
 
 void CUI_main() {
