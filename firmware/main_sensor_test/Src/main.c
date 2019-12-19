@@ -186,10 +186,15 @@ int main(void)
   init_gnss();
   init_pwm(&cansat_data.motor);
 
-  
-  set_goalFromEEPROM(0);
   update_sensor(&cansat_data);
+
+  cansat_data.calc_press = cansat_data.press;
+  cansat_data.press_d = 0;
+  cansat_data.calc_press_d = 0;
+
   printf("TIME %02d:%02d:%02d\n", cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
+  set_goalFromEEPROM(0);
+
   cansat_data.flash_address = get_startAddress(cansat_data.gnss.hh, cansat_data.gnss.mm, cansat_data.gnss.ss);
   cansat_data.log_num = 0;
   printf("Flash address 0x%lX\n", cansat_data.flash_address);

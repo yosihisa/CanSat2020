@@ -60,6 +60,9 @@ typedef struct {
 	struct			xyz accel;
 	img_t			img;
 
+	unsigned long	calc_press;
+	long			calc_press_d;
+
 }cansat_t;
 
 

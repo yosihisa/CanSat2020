@@ -13,6 +13,9 @@
 #define ACCELERATION  20	//最大加速度
 #define VOLTAGE_LIMIT 7400	//最大電圧[m/v]
 
+#define PRESS_K1 0.10F		//落下速度計算用係数1
+#define PRESS_K2 0.02F		//落下速度計算用係数2
+
 #define TIM_PWM htim3
 extern TIM_HandleTypeDef TIM_PWM;
 
@@ -44,6 +47,17 @@ void update_sensor(cansat_t* data) {
 	data->flightPin = HAL_GPIO_ReadPin(FLIGHT_PIN_GPIO_Port, FLIGHT_PIN_Pin);
 
 	get_gnss(&data->gnss, 200);
+
+	//方位偏差計算
+	data->arg = data->gnss.arg - data->compass.arg;
+	if (data->arg > +180)data->arg -= 360;
+	if (data->arg < -180)data->arg += 360;
+
+	//降下速度計算
+	unsigned long press	= data->calc_press;
+	data->calc_press	= (float)((PRESS_K1 * data->press)   + ((1.0 - PRESS_K1) * data->calc_press));
+	data->calc_press_d	= data->calc_press - press;
+	data->press_d		= (float)((PRESS_K2 * data->press_d) + ((1.0 - PRESS_K2) * data->calc_press_d));
 
 }
 
