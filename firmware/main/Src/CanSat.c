@@ -10,11 +10,11 @@
 #include <string.h>
 
 
-#define ACCELERATION  20	//最大加速度
+#define ACCELERATION  10	//最大加速度
 #define VOLTAGE_LIMIT 7400	//最大電圧[m/v]
 
-#define PRESS_K1 0.10F		//落下速度計算用係数1
-#define PRESS_K2 0.02F		//落下速度計算用係数2
+#define PRESS_K1 0.050F		//落下速度計算用係数1
+#define PRESS_K2 0.005F		//落下速度計算用係数2
 
 #define TIM_PWM htim3
 extern TIM_HandleTypeDef TIM_PWM;

@@ -25,6 +25,7 @@ void mode1_Standby(cansat_t* data) {
 
         count = 0;
         data->mode = 2;
+        return;
     }
 }
 
@@ -33,6 +34,7 @@ void mode2_Descent(cansat_t* data) {
     if (T * count >= 60.0 || data->press_d <= 20) {
         count = 0;
         data->mode = 3;
+        return;
     }
     count++;
 }
@@ -42,12 +44,15 @@ void mode3_Separation(cansat_t* data) {
 
     if (count == 0) {
         HAL_GPIO_WritePin(Nichrome_GPIO_Port, Nichrome_Pin, GPIO_PIN_SET);
+        data->nichrome = 1;
     }
 
     if (T * count >= 1.2) {
         HAL_GPIO_WritePin(Nichrome_GPIO_Port, Nichrome_Pin, GPIO_PIN_RESET);
+        data->nichrome = 0;
         count = 0;
         data->mode = 4;
+        return;
     }
     count++;
 }
@@ -62,6 +67,7 @@ void mode4_Avoidance(cansat_t* data) {
     if (T * count >= 1.0) {
         count = 0;
         data->mode = 5;
+        return;
     }
 
     count++;
@@ -96,6 +102,7 @@ void mode5_Calibration(cansat_t* data) {
         motor_Speed(&data->motor, 0, 0);
         count = 0;
         data->mode = 6;
+        return;
     }
 
     count++;
@@ -142,6 +149,7 @@ void mode6_GNSS(cansat_t* data) {
         motor_Speed(&data->motor, 0, 0);
         data->mode = 7;
         count = 0;
+        return;
     }
 
     count++;
@@ -214,6 +222,7 @@ void mode7_Optical(cansat_t* data) {
                     motor_Speed(&data->motor, 0, 0);
                     data->mode = 8;
                     count = 0;
+                    return;
                 }
             }
             n++;
