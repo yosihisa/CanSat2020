@@ -140,11 +140,11 @@ void print_log(cansat_t* data) {
 		data->voltage,		data->current,
 		data->gnss.hh,		data->gnss.mm,		data->gnss.ss,			data->gnss.ms
 	);
-	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 10); //COM
+	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 20); //COM
 	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
 
 	//SUB
-	sprintf(str, "%5ld,%d,%d,%d,%d, %d,%d,%d,%d, %4d,%3d, %02d,%02d,%02d.%03d, %d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d\n",
+	sprintf(str, "%5ld,%d,%d,%d,%d, %d,%d,%d,%d, %4d,%3d, %02d,%02d,%02d.%03d,\t%d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d,\r\n",
 		data->log_num,		data->mode,			data->flightPin,		data->nichrome,		data->arg,
 		data->motor.L_ref,	data->motor.R_ref,	data->motor.L,			data->motor.R,
 		data->voltage,		data->current,
@@ -155,7 +155,7 @@ void print_log(cansat_t* data) {
 		data->img.name,		data->img.xc,		data->img.yc,			data->img.s,
 		data->accel.x, data->accel.y, data->accel.z
 	);
-	HAL_UART_Transmit(&SUB_PORT, (uint8_t*)str, strlen(str), 10); //SUB
+	HAL_UART_Transmit(&SUB_PORT, (uint8_t*)str, strlen(str), 50); //SUB
 
 	//PC
 	sprintf(str, "%5ld(0x%04lX) M%d F%d N%d A%+4d r(%+4d,%+4d) m(%+4d,%+4d) %4dmV %3dmA %02d:%02d:%02d.%03d ",
@@ -164,7 +164,7 @@ void print_log(cansat_t* data) {
 		data->voltage,		data->current,
 		data->gnss.hh,		data->gnss.mm,		data->gnss.ss,			data->gnss.ms
 	);
-	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 10); //PC
+	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 20); //PC
 	sprintf(str, "G[%c(%10ld,%10ld) S%3d D%8ld(%+4d)] Ca%+4d P[%ld,%d] I[%d.jpg,(%3d,%3d)s%ld] A[%+3d,%+3d,%+3d]\n",
 		(data->gnss.state == 1 ? 'A' : 'V'),	data->gnss.latitude,	data->gnss.longitude,
 		data->gnss.speed,	data->gnss.dist,	data->gnss.arg,
@@ -172,19 +172,19 @@ void print_log(cansat_t* data) {
 		data->img.name,		data->img.xc,		data->img.yc,			data->img.s,
 		data->accel.x, data->accel.y, data->accel.z
 	);
-	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 10); //PC
+	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 20); //PC
 
 
 	//COM 後半
 	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_SET);
-	sprintf(str, "%d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d\t\n",
+	sprintf(str, "%d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d,\t\n",
 		data->gnss.state,	data->gnss.latitude,data->gnss.longitude,
 		data->gnss.speed,	data->gnss.dist,	data->gnss.arg,
 		data->compass.arg,	data->press,		data->press_d,
 		data->img.name,		data->img.xc,		data->img.yc,			data->img.s,
 		data->accel.x, data->accel.y, data->accel.z
 	);
-	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 10); //COM
+	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 20); //COM
 	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
 }
 

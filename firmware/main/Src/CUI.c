@@ -86,24 +86,82 @@ void print_logList() {
 		if (time == 0xFFFFFFFF) {
 			break;
 		}
-		printf(" No.%3d   %02d:%02d:%02d   %04lX \t\n",
+		printf(" No.%3d   UTC %02d:%02d:%02d (JST %02d:%02d:%02d) 0x%04lX \t\n",
 			i,
-			(uint8_t)(time >> 16),
-			(uint8_t)(time >> 8),
-			(uint8_t)(time >> 0),
+			(uint8_t)(time >> 16)           ,(uint8_t)(time >> 8),(uint8_t)(time >> 0),
+			(uint8_t)((time >> 16) + 9 )%24 ,(uint8_t)(time >> 8),(uint8_t)(time >> 0),
 			flash_address
 		);
 		HAL_Delay(10);
 	}
 }
 
+void print_log1L(uint32_t buff[]) {
+	char str[512];
+
+	uint32_t log_num        = (uint32_t)(buff[0]);
+	uint8_t  mode           = (uint8_t )(buff[1] >> 16);
+    uint8_t  flightPin      = (uint8_t )(buff[1] >> 8);
+    uint8_t  nichrome       = (uint8_t )(buff[1]);
+     int16_t arg            = ( int16_t)(buff[2] >> 16);
+     int8_t  motor_L_ref    = ( int8_t )(buff[2] >> 8);
+     int8_t  motor_R_ref    = ( int8_t )(buff[2]);
+     int16_t motor_L        = ( int16_t)(buff[3] >> 16);
+     int16_t motor_R        = ( int16_t)(buff[3]);
+     int16_t voltage        = ( int16_t)(buff[4] >> 16);
+     int16_t current        = ( int16_t)(buff[4]);
+     int32_t gnss_latitude  = ( int32_t)(buff[5]);
+     int32_t gnss_longitude = ( int32_t)(buff[6]);
+    uint8_t  gnss_hh        = (uint8_t )(buff[7] >> 24);
+    uint8_t  gnss_mm        = (uint8_t )(buff[7] >> 16);
+    uint8_t  gnss_ss        = (uint8_t )(buff[7] >> 8);
+    uint8_t  gnss_state     = (uint8_t )(buff[7]);
+    uint16_t gnss_ms        = (uint16_t)(buff[8] >> 16);
+    uint16_t gnss_speed     = (uint16_t)(buff[8]);
+    uint32_t gnss_dist      = (uint32_t)(buff[9]);
+     int16_t gnss_arg       = ( int16_t)(buff[10] >> 16);
+     int16_t press_d        = ( int16_t)(buff[10]);
+    uint32_t press          = (uint32_t)(buff[11]);
+     int16_t compass_arg    = ( int16_t)(buff[13]);
+     int16_t accel_x        = ( int16_t)(buff[14] >> 16);
+     int16_t accel_y        = ( int16_t)(buff[14]);
+     int16_t accel_z        = ( int16_t)(buff[15] >> 16);
+    uint16_t img_name       = (uint16_t)(buff[15]);
+    uint16_t img_xc         = (uint16_t)(buff[16] >> 16);
+    uint16_t img_yc         = (uint16_t)(buff[16]);
+    uint32_t img_s          = (uint32_t)(buff[17]);
+
+	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_SET);
+	sprintf(str, "%5ld,%d,%d,%d,%d, %d,%d,%d,%d, %4d,%3d, %02d,%02d,%02d.%03d,\t",
+		log_num,		mode,			flightPin,		nichrome,		arg,
+		motor_L_ref,	motor_R_ref,	motor_L,			motor_R,
+		voltage,		current,
+		gnss_hh,		gnss_mm,		gnss_ss,			gnss_ms
+	);
+	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 20);
+	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
+	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 20);
+
+	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_SET);
+	sprintf(str, "%d,%10ld,%10ld, %d,%ld,%d, %d,%ld,%d, %d,%d,%d,%ld, %+d,%+d,%+d,\t\n",
+        gnss_state  , gnss_latitude, gnss_longitude,
+        gnss_speed  , gnss_dist    , gnss_arg      ,
+        compass_arg , press        , press_d       ,
+        img_name    , img_xc       , img_yc        , img_s ,
+        accel_x     , accel_y      , accel_z
+	);
+	HAL_UART_Transmit(&COM_PORT, (uint8_t*)str, strlen(str), 20);
+	HAL_GPIO_WritePin(LED_TX_GPIO_Port, LED_TX_Pin, GPIO_PIN_RESET);
+	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 20);
+
+}
 void CUI_GoalList() {
 	printf("\n\t\n\t ");
 	printf("\n--------------------GNSS Goal Positions List--------------------\t\n");
 	HAL_Delay(120);
 	print_goalList();
 	HAL_Delay(500);
-	printf("\nType 0-9 to return to the first screen.\n\t");
+	printf("\n0-9 Return to the first screen.\n\t");
 	if (get_num(300) == 0) {
 		return;
 	}
@@ -115,7 +173,7 @@ void CUI_LogList() {
 	HAL_Delay(120);
 	print_logList();
 	HAL_Delay(2000);
-	printf("\nType 0-9 to return to the first screen.\n\t");
+	printf("\n0-9 Rreturn to the first screen.\n\t");
 	if (get_num(300) == 0) {
 		return;
 	}
@@ -235,6 +293,7 @@ void CUI_SetGoal() {
 
 void CUI_TxLog() {
 	int n;
+	int delay = 0;
 	unsigned long start_address = 0;
 	unsigned long stop_address = 0;
 	unsigned long address;
@@ -257,18 +316,28 @@ void CUI_TxLog() {
 	eeprom_readWord(0x080800C0 + (n * 8) + 12, &stop_address);
 	stop_address--;
 
-	printf("\n\nRead Flash Page 0x%04lX to 0x%04lX\t\n", start_address, stop_address);
+	printf("\n\nRead Flash Page 0x%04lX to 0x%04lX ( %ld L)\t\n", start_address, stop_address,(stop_address-start_address)*3);
 	if (start_address == 0xFFFFFFFF || start_address == 0x00000000) {
 		printf("No such file\t\n");
 		HAL_Delay(1000);
 		return;
 	}
-	printf("\nType 1 to start transfer.\t\n");
-	printf("Type 2-9,0 to Exit.\n\t");
-	if (get_num(300) != 1) {
-		printf("\n\t\n");
+	printf("1 Start transfer.(High speed)\t\n");
+	printf("2 Start transfer.(Low  speed)\t\n");
+	printf("3-9,0 Exit.\n\t");
+
+	switch (get_num(300)) {
+	case 1:
+		delay = 0;
+		break;
+	case 2:
+		delay = 150;
+		break;
+	default:
 		return;
+		break;
 	}
+
 	HAL_Delay(400);
 	printf("\n\t\n\t\n");
 
@@ -277,12 +346,12 @@ void CUI_TxLog() {
 		
 		if (buff[63] != 0)break;
 		
-		for (int i = 0; i < 64; i++) {
-			printf("%08lX ", buff[i]);
-			if(i==19 || i== 39 || i== 63)printf("\t\n");
+		for (int i = 0; i < 3; i++) {
+			print_log1L(&buff[i * 20]);
+			if (delay != 0) {
+				HAL_Delay(delay);
+			}
 		}
-		//HAL_Delay(50);
-
 	}
 	printf("\t\n");
 	HAL_Delay(2000);

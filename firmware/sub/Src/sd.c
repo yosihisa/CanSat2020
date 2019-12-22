@@ -16,7 +16,7 @@ DIR dir;
 uint16_t	jpg_dir  = 0; //ディレクトリ番号
 uint32_t	jpg_name = 0; //ファイル番号
 FIL			jpg_fil;
-FIL			lof_fil;
+FIL			log_fil;
 
 int sd_init() {
 
@@ -57,12 +57,12 @@ int sd_init() {
 
 	//制御履歴ファイルの作成
 	sprintf(path, "/%05d/log.csv", jpg_dir);
-	res_fs = f_open(&lof_fil, (char*)path, FA_WRITE | FA_CREATE_ALWAYS);
+	res_fs = f_open(&log_fil, (char*)path, FA_WRITE | FA_CREATE_ALWAYS);
 	if (res_fs != FR_OK) {
 		printf("f_open() : error %u\n", res_fs);
 		return res_fs;
 	}
-	res_fs = f_sync(&lof_fil);
+	res_fs = f_sync(&log_fil);
 	if (res_fs != FR_OK) {
 		printf("f_sync() : error %u\n", res_fs);
 		return res_fs;
@@ -75,11 +75,10 @@ int sd_init() {
 
 int sd_writeLog(char data[], uint32_t len) {
 	unsigned int writeBytes;
-	res_fs = f_write(&lof_fil, data, len, &writeBytes);
-	f_sync(&lof_fil);
+	res_fs = f_write(&log_fil, data, len, &writeBytes);
+	f_sync(&log_fil);
 	if (res_fs != FR_OK) {
 		printf("sd_writeLog() : error %u\n", res_fs);
-		return res_fs;
 	}
 	return res_fs;
 }
@@ -99,8 +98,6 @@ int sd_writeJpg(uint8_t data[], uint32_t size, uint32_t* file_name) {
 
 	if (res_fs != FR_OK) {
 		printf("sd_writeJpg() : error %u\n", res_fs);
-		return res_fs;
 	}
-
-	return FR_OK;
+	return res_fs;
 }
