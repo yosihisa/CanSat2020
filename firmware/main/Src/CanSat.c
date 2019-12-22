@@ -13,8 +13,8 @@
 #define ACCELERATION  10	//最大加速度
 #define VOLTAGE_LIMIT 7400	//最大電圧[m/v]
 
-#define PRESS_K1 0.050F		//落下速度計算用係数1
-#define PRESS_K2 0.005F		//落下速度計算用係数2
+#define PRESS_K1 0.100F		//落下速度計算用係数1
+#define PRESS_K2 0.100F		//落下速度計算用係数2
 
 #define TIM_PWM htim3
 extern TIM_HandleTypeDef TIM_PWM;
@@ -54,11 +54,14 @@ void update_sensor(cansat_t* data) {
 	if (data->arg < -180)data->arg += 360;
 
 	//降下速度計算
-	unsigned long press	= data->calc_press;
-	data->calc_press	= (float)((PRESS_K1 * data->press)   + ((1.0 - PRESS_K1) * data->calc_press));
-	data->calc_press_d	= data->calc_press - press;
-	data->press_d		= (float)((PRESS_K2 * data->press_d) + ((1.0 - PRESS_K2) * data->calc_press_d));
+	float press_lpf_before;
+	press_lpf_before = data->press_lpf; //1つ前の気圧をコピー
+	data->press_lpf  = (PRESS_K1 * data->press)   + ((1.0 - PRESS_K1) * data->press_lpf); //気圧の推定値を測定値で更新
 
+	data->press_d_raw = data->press_lpf - press_lpf_before; //速度を気圧の推定値の差分で計算
+	data->press_d_lpf    = (PRESS_K2 * data->press_d_raw) + ((1.0 - PRESS_K2) * data->press_d_lpf); //速度の推定値を更新
+	
+	data->press_d = (short)data->press_d_lpf;
 }
 
 short calc_pwmPower(short cv, int8_t reference, short voltage) {
@@ -165,7 +168,7 @@ void print_log(cansat_t* data) {
 		data->gnss.hh,		data->gnss.mm,		data->gnss.ss,			data->gnss.ms
 	);
 	HAL_UART_Transmit(&PC_PORT, (uint8_t*)str, strlen(str), 20); //PC
-	sprintf(str, "G[%c(%10ld,%10ld) S%3d D%8ld(%+4d)] Ca%+4d P[%ld,%d] I[%d.jpg,(%3d,%3d)s%ld] A[%+3d,%+3d,%+3d]\n",
+	sprintf(str, "G[%c(%10ld,%10ld) S%3d D%8ld(%+4d)] Ca%+4d P[%ld,%+5d] I[%d.jpg,(%3d,%3d)s%ld] A[%+3d,%+3d,%+3d]\n",
 		(data->gnss.state == 1 ? 'A' : 'V'),	data->gnss.latitude,	data->gnss.longitude,
 		data->gnss.speed,	data->gnss.dist,	data->gnss.arg,
 		data->compass.arg,	data->press,		data->press_d,

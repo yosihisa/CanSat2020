@@ -189,9 +189,10 @@ int main(void)
   cansat_data.mode = 0;
   cansat_data.log_num = 0;
 
-  cansat_data.calc_press = cansat_data.press;
-  cansat_data.press_d = 0;
-  cansat_data.calc_press_d = 0;
+  cansat_data.press_lpf   = cansat_data.press;
+  cansat_data.press_d     = 0;
+  cansat_data.press_d_lpf = 0;
+  cansat_data.press_d_raw = 0;
 
   motor_Speed(&cansat_data.motor, 0, 0);
   motorStop();

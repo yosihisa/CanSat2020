@@ -21,8 +21,7 @@ void mode1_Standby(cansat_t* data) {
 
     //分離したら
     if (data->flightPin == 1) {
-        data->press_d = 30000;
-
+        data->press_d_lpf = 600;
         count = 0;
         data->mode = 2;
         return;
@@ -30,6 +29,7 @@ void mode1_Standby(cansat_t* data) {
 }
 
 //降下
+
 void mode2_Descent(cansat_t* data) {
     if (T * count >= 60.0 || data->press_d <= 20) {
         count = 0;
