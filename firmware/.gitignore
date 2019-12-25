@@ -1,7 +1,7 @@
 .metadata/
 */Debug
 */Release
-*/.vscode/
+build
 *.bak
 .settings/
 .vs

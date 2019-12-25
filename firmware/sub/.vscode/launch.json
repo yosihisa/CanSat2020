@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/${workspaceFolderBasename}.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "preLaunchTask": "Build project",
+            "armToolchainPath": "C:\\tools\\gcc-arm-none-eabi-9-2019-q4-major-win32\\bin\\",
+            "serverpath": "C:\\Program Files (x86)\\SEGGER\\JLink\\JLinkGDBServerCL.exe",
+            "servertype": "jlink",
+            "device": "STM32F205RF",
+            "interface": "swd"
+        }
+    ]
+}
