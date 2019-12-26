@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "main"
+		},
+		{
+			"path": "sub"
+		}
+	],
+	"settings": {},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools",
+			"austin.code-gnu-global",
+			"marus25.cortex-debug"
+		]
+	}
+}
