@@ -54,6 +54,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
 	}
 }
 
+
+
+//---------------------------------------Main BEGIN----------------------------------------------------------
 int main(void)
 {
   HAL_Init();
@@ -136,7 +139,7 @@ int main(void)
 
 	  //Calculation
 	  switch (cansat_data.mode) {
-	  case 0: //ùââÒÇÃÇ›
+	  case 0: 
 		  cansat_data.mode = 1;
 		  break;
 	  case 1:

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * gnc.c
  *
  *  Created on: Dec 19, 2019
@@ -29,9 +29,23 @@ void mode1_Standby(cansat_t* data) {
 }
 
 //降下
-
+/*
+速度の推定値が5秒連続で20以下になったら次へ
+または、分離後60秒経ったら次へ
+*/
+unsigned long t;
 void mode2_Descent(cansat_t* data) {
-    if (T * count >= 60.0 || data->press_d <= 20) {
+
+    if(count==0){
+        t=0;
+    }
+    if(data->press_d <= 20){
+        t++;
+    }else{
+        t=0;
+    }
+
+    if (T * count >= 60.0 || T*t>=4 ) {
         count = 0;
         data->mode = 3;
         return;
@@ -177,7 +191,7 @@ void mode7_Optical(cansat_t* data) {
         name_p = data->img.name;
         t = count;
         //一定以上の大きさの赤が存在したら
-        if (data->img.s > SQUARE) {
+        if (data->img.s >= SQUARE) {
             //右
             if (data->img.xc < 120) {
                 xp = 1;
@@ -230,11 +244,12 @@ void mode7_Optical(cansat_t* data) {
         }
 
         //画像中にカラーコーンを検出できなかったら
-        else {
+        if (data->img.s < SQUARE) {
             if (xp == 1) {
                 motor_Speed(&data->motor, 55, 45);
             }
             else {
+                motor_Speed(&data->motor, 45, 55);
             }
         }
     }
