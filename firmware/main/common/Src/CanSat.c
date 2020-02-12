@@ -96,12 +96,12 @@ void _motor(motor_t* motor, short voltage) {
 	}
 
 	if (motor->R > 0) {
-		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_3, motor->R);
-		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_4, 0);
+		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_4, motor->R);
+		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_3, 0);
 	}
 	else {
-		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_3, 0);
-		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_4, -1*motor->R);
+		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_4, 0);
+		__HAL_TIM_SetCompare(&TIM_PWM, TIM_CHANNEL_3, -1*motor->R);
 	}
 }
 

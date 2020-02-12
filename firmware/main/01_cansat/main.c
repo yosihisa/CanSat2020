@@ -140,7 +140,7 @@ int main(void)
 	  //Calculation
 	  switch (cansat_data.mode) {
 	  case 0: 
-		  cansat_data.mode = 1;
+		  cansat_data.mode = 1; //初期モード デバッグ用 通常は1
 		  break;
 	  case 1:
 		  mode1_Standby(&cansat_data);
