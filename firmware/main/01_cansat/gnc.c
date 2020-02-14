@@ -23,7 +23,7 @@ void mode1_Standby(cansat_t* data) {
     if (data->flightPin == 1) {
         data->press_d_lpf = 600;
         count = 0;
-        data->mode = 2;
+        data->mode = 7; //Debugのため変更
         return;
     }
 }
@@ -195,13 +195,13 @@ void mode7_Optical(cansat_t* data) {
             //右
             if (data->img.xc < 120) {
                 xp = 1;
-                motor_Speed(&data->motor, 60, 45);
+                motor_Speed(&data->motor, 60, 50);
 
             }
             //やや右
             if (data->img.xc >= 120 && data->img.xc < 240) {
                 xp = 1;
-                motor_Speed(&data->motor, 70, 65);
+                motor_Speed(&data->motor, 70, 60);
 
             }
             //中央
@@ -213,13 +213,13 @@ void mode7_Optical(cansat_t* data) {
             //やや左
             if (data->img.xc >= 400 && data->img.xc < 520) {
                 xp = -1;
-                motor_Speed(&data->motor, 65, 70);
+                motor_Speed(&data->motor, 60, 70);
 
             }
             //左
             if (data->img.xc >= 520) {
                 xp = -1;
-                motor_Speed(&data->motor, 45, 70);
+                motor_Speed(&data->motor, 50, 60);
             }
 
             //ゴール判定
@@ -256,7 +256,7 @@ void mode7_Optical(cansat_t* data) {
 
     //新しい画像がまだ取得できていなかったら
     else {
-        if (T * (count - t) > 1.0) {
+        if (T * (count - t) > 0.6) {
             motor_Speed(&data->motor, 0, 0);
         }
     }
